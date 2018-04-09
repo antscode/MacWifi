@@ -2,11 +2,16 @@ cmake_minimum_required(VERSION 2.8)
 
 add_executable(MacWifi
 	sysmenu.c
-	resources.r)
+	resources.r
+	Wifi.cpp
+	Modules/WifiModule.cpp
+	Modules/VM300.cpp)
 
 set_target_properties(MacWifi PROPERTIES
 	OUTPUT_NAME MacWifi.flt
 	LINK_FLAGS -Wl,--mac-flat)
+
+target_link_libraries(MacWifi MacHTTP MacTCPHelper)
 
 # Put everything together
 add_custom_command(

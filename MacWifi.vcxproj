@@ -107,9 +107,15 @@ xcopy *.APPL "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\Basilis
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sysmenu.h" />
+    <ClInclude Include="Modules\WifiModule.h" />
+    <ClInclude Include="Modules\VM300.h" />
+    <ClInclude Include="Wifi.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Modules\WifiModule.cpp" />
     <ClCompile Include="sysmenu.c" />
+    <ClCompile Include="Modules\VM300.cpp" />
+    <ClCompile Include="Wifi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
