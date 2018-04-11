@@ -106,16 +106,17 @@ xcopy *.APPL "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\Basilis
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Network.h" />
     <ClInclude Include="sysmenu.h" />
     <ClInclude Include="Modules\WifiModule.h" />
     <ClInclude Include="Modules\VM300.h" />
-    <ClInclude Include="Wifi.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Modules\WifiModule.cpp" />
-    <ClCompile Include="sysmenu.c" />
+    <ClCompile Include="sysmenu.cpp" />
     <ClCompile Include="Modules\VM300.cpp" />
-    <ClCompile Include="Wifi.cpp" />
+    <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

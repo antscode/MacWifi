@@ -4,20 +4,23 @@
 */
 
 #include <Menus.h>
+#include "Modules/VM300.h"
 
 #ifndef ____SYSMENU_HEADER____
 #define ____SYSMENU_HEADER____
 
-// * ******************************************************************************* *
-// * ******************************************************************************* *
+extern "C"
+{
+	// * ******************************************************************************* *
+	// * ******************************************************************************* *
 
-// Basic debugging flag that enables/disables all Debug() 
-// and DebugStr() calls embedded into the source files.
-// #define ____DEBUG____ 
+	// Basic debugging flag that enables/disables all Debug() 
+	// and DebugStr() calls embedded into the source files.
+	// #define ____DEBUG____ 
 
-// When we install the Menu, we will try to get this MenuID. If 
-// there is already one (2 copies of INIT?), we will do our best
-// to get another (but close) ID. (See InsertMenu patch)
+	// When we install the Menu, we will try to get this MenuID. If 
+	// there is already one (2 copies of INIT?), we will do our best
+	// to get another (but close) ID. (See InsertMenu patch)
 #define kPrefMenuID		-19999
 
 // This is an icon family for the menu. Currently the value is set
@@ -28,32 +31,36 @@
 // * ******************************************************************************* *
 // * ******************************************************************************* *
 
-typedef pascal void(*InsertMenuProcPtr) (MenuHandle mHdl, short beforeID);
-typedef pascal void(*DrawMenuProcPtr) ();
-typedef pascal long(*MenuSelectProcPtr) (Point where);
-typedef pascal void(*SystemMenuProcPtr) (long result);
+	typedef pascal void(*InsertMenuProcPtr) (MenuHandle mHdl, short beforeID);
+	typedef pascal void(*DrawMenuProcPtr) ();
+	typedef pascal long(*MenuSelectProcPtr) (Point where);
+	typedef pascal void(*SystemMenuProcPtr) (long result);
 
-typedef struct {
-	InsertMenuProcPtr saveInsertMenu;
-	DrawMenuProcPtr saveDrawMenuBar;
-	MenuSelectProcPtr saveMenuSelect;
-	SystemMenuProcPtr saveSystemMenu;
-	
-	short menuID, **sysMenus;
-	MenuHandle mHdl;
-	Handle menuIcon;
-	FSSpec homeFile;
-} GlobalsRec;
+	typedef struct {
+		InsertMenuProcPtr saveInsertMenu;
+		DrawMenuProcPtr saveDrawMenuBar;
+		MenuSelectProcPtr saveMenuSelect;
+		SystemMenuProcPtr saveSystemMenu;
 
-// * ******************************************************************************* *
-// * ******************************************************************************* *
-// Function Prototypes
+		short menuID, **sysMenus;
+		MenuHandle mHdl;
+		Handle menuIcon;
+		FSSpec homeFile;
+		bool initialised;
+	} GlobalsRec;
 
-ProcPtr ApplyTrapPatch(short trap, ProcPtr patchPtr);
-pascal short DetachIcons(long iconType, Handle *iconHdl, void *data);
-pascal void Patched_InsertMenu(MenuHandle menu, short beforeID);
-pascal void Patched_DrawMenuBar(void);
-pascal long Patched_MenuSelect(Point where);
-pascal void Patched_SystemMenu(long result);
+	// * ******************************************************************************* *
+	// * ******************************************************************************* *
+	// Function Prototypes
+
+	ProcPtr ApplyTrapPatch(short trap, ProcPtr patchPtr);
+	pascal short DetachIcons(long iconType, Handle *iconHdl, void *data);
+	pascal void Patched_InsertMenu(MenuHandle menu, short beforeID);
+	pascal void Patched_DrawMenuBar(void);
+	pascal long Patched_MenuSelect(Point where);
+	pascal void Patched_SystemMenu(long result);
+}
+
+void SetNetworks(std::vector<Network> networks);
 
 #endif

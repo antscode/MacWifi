@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 
 add_executable(MacWifi
-	sysmenu.c
+	sysmenu.cpp
 	resources.r
-	Wifi.cpp
+	Util.cpp
 	Modules/WifiModule.cpp
 	Modules/VM300.cpp)
 

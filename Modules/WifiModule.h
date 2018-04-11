@@ -2,19 +2,19 @@
 #define _WIFI_MODULE_
 
 #include <string>
-#include <MacHTTP/HttpClient.h>
+#include <vector>
+#include <functional>
+#include "../Network.h"
 
 using namespace std::placeholders;
 
 class WifiModule
 {
 	public:
-		HttpClient& GetHttpClient();
-		virtual void Login() = 0;
-		virtual void LoginResponse(HttpResponse response) = 0;
-		virtual void GetNetworks() = 0;
-		virtual void GetNetworksResponse(HttpResponse response) = 0;
-		void DebugStr(std::string msg);
+		virtual void GetNetworks(std::function<void(std::vector<Network>)> onComplete);
+
+	protected:
+		std::function<void(std::vector<Network>)> GetNetworksComplete;
 };
 
 #endif // _WIFI_MODULE_ 
