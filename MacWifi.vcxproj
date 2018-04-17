@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{746DC640-3FE3-4F44-B0A3-371940591DC8}</ProjectGuid>
+    <ProjectGuid>{5C382B6E-788C-4D06-8CA9-93E61469652B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -68,7 +68,7 @@ cd $(ProjectDir)$(Configuration)
 make clean
 cmake .. -DCMAKE_TOOLCHAIN_FILE=~/Retro68-build/toolchain/m68k-apple-macos/cmake/retro68.toolchain.cmake
 make 
-xcopy *.init "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\BasiliskII\Virtual Desktop\" /y /s</NMakeBuildCommandLine>
+xcopy *.APPL "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\BasiliskII\Virtual Desktop\" /y /s</NMakeBuildCommandLine>
     <NMakeOutput>$(ProjectName).exe</NMakeOutput>
     <NMakePreprocessorDefinitions>WIN32_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <IncludePath>C:\cygwin64\home\AnthonySuper\Retro68-build\toolchain\CIncludes;C:\cygwin64\home\AnthonySuper\Retro68-build\toolchain\m68k-apple-macos\include</IncludePath>
@@ -78,7 +78,7 @@ cd $(ProjectDir)$(Configuration)
 make clean
 cmake .. -DCMAKE_TOOLCHAIN_FILE=~/Retro68-build/toolchain/m68k-apple-macos/cmake/retro68.toolchain.cmake
 make 
-xcopy *.cdev "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\BasiliskII\Virtual Desktop\" /y /s</NMakeReBuildCommandLine>
+xcopy *.APPL "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\BasiliskII\Virtual Desktop\" /y /s</NMakeReBuildCommandLine>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <NMakeBuildCommandLine>set errorlevel=0
@@ -106,14 +106,19 @@ xcopy *.APPL "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\Basilis
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Comms.h" />
     <ClInclude Include="Network.h" />
+    <ClInclude Include="Prefs.h" />
     <ClInclude Include="sysmenu.h" />
     <ClInclude Include="Modules\WifiModule.h" />
     <ClInclude Include="Modules\VM300.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Comms.cpp" />
+    <ClCompile Include="MacWifi.cpp" />
     <ClCompile Include="Modules\WifiModule.cpp" />
+    <ClCompile Include="Prefs.cpp" />
     <ClCompile Include="sysmenu.cpp" />
     <ClCompile Include="Modules\VM300.cpp" />
     <ClCompile Include="Util.cpp" />

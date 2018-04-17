@@ -12,6 +12,8 @@
 #include <Sound.h>
 
 #include "sysmenu.h"
+#include "Prefs.h"
+#include "Util.h"
 
 extern "C"
 {
@@ -164,7 +166,6 @@ extern "C"
 
 	pascal long Patched_MenuSelect(Point where)
 	{
-	
 		long value;
 		MenuSelectProcPtr proc;
 		THz saveZone;
@@ -173,13 +174,19 @@ extern "C"
 		// Its an ideal place to update the contents of your menu on the fly
 		// to reflect current settings or conditions.
 
-		if (!glob.initialised)
+		if (glob.mHdl && !glob.initialised)
 		{
 			saveZone = GetZone();
 			SetZone(SystemZone());
 
-			VM300 vm300;
-			vm300.GetNetworks(SetNetworks);
+			Prefs prefs;
+			Json::Value networks = prefs.Data["networks"];
+
+			for (int i = 0; i < networks.size(); ++i)
+			{
+				AppendMenu(glob.mHdl, "\p ");
+				SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), Util::StrToPStr(networks[i]["name"].asString()));
+			}
 
 			SetZone(saveZone);
 			glob.initialised = true;
@@ -226,14 +233,5 @@ extern "C"
 		// Otherwise, pass it on!
 		if (menuID != glob.menuID)
 			(*proc) (result);
-	}
-}
-
-void SetNetworks(std::vector<Network> networks)
-{
-	for (std::vector<Network>::iterator it = networks.begin(); it != networks.end(); ++it)
-	{
-		AppendMenu(glob.mHdl, "\p ");
-		SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), Util::StrToPStr(it->Name));
 	}
 }

@@ -1,11 +1,51 @@
 #include "Retro68.r"
+#include "Finder.r"
+#include "MacTypes.r"
+#include "Processes.r"
 
 type 'INIT' {
 	RETRO68_CODE_TYPE
 };
 
 resource 'INIT' (128, sysheap, locked, nonpurgeable) {
-	dontBreakAtEntry, $$read("MacWifi.flt");
+	dontBreakAtEntry, $$read("MacWifiINIT");
+};
+
+resource 'FREF' (128, purgeable) {
+   'appe', 0, ""
+};
+
+type 'MWFI' as 'STR ';
+resource 'MWFI' (0, purgeable) {
+   "MacWifi Extension 1.0"
+};
+
+resource 'BNDL' (128, purgeable) {
+   'MWFI', 0,
+   {  'ICN#', {0, 128},
+      'FREF', {0, 128}
+   }
+};
+
+resource 'SIZE' (-1) {
+	dontSaveScreen,
+	acceptSuspendResumeEvents,
+	enableOptionSwitch,
+	canBackground,
+	multiFinderAware,
+	onlyBackground,
+	dontGetFrontClicks,
+	ignoreChildDiedEvents,
+	is32BitCompatible,
+	isHighLevelEventAware,
+	onlyLocalHLEvents,
+	notStationeryAware,
+	reserved,
+	reserved,
+	reserved,
+	reserved,
+	1000 * 1024,
+	1000 * 1024
 };
 
 data 'ICN#' (128) {
@@ -190,21 +230,4 @@ data 'icl4' (128) {
 	$"F0CC CCCC CCCC CCCC CCCC CCCC CCCD F000"            /* .ллллллллллллм.. */
 	$"FCDD DDDD DDDD DDDD DDDD DDDD DDDD F000"            /* ................ */
 	$"0FFF FFFF FFFF FFFF FFFF FFFF FFFF 0000"            /* ................ */
-};
-
-data 'BNDL' (128) {
-	$"4D57 4649 0000 0001 4652 4546 0000 0000"            /* MWFI....FREF.... */
-	$"0080 4943 4E23 0000 0000 0080"                      /* .─ICN#.....─ */
-};
-
-data 'MWFI' (0, "Owner resource") {
-	$"00"                                                 /* . */
-};
-
-data 'FREF' (128) {
-	$"494E 4954 0000 7F"                                  /* INIT... */
-};
-
-data 'vers' (128) {
-	$"0001 2000 000F 0000"                                /* .. ..... */
 };

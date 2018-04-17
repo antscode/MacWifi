@@ -1,27 +1,51 @@
 cmake_minimum_required(VERSION 2.8)
 
-add_executable(MacWifi
+add_executable(MacWifiINIT
 	sysmenu.cpp
-	resources.r
+	Prefs.cpp
 	Util.cpp
-	Modules/WifiModule.cpp
-	Modules/VM300.cpp)
+	resources.r
+)
 
-set_target_properties(MacWifi PROPERTIES
-	OUTPUT_NAME MacWifi.flt
-	LINK_FLAGS -Wl,--mac-flat)
+target_link_libraries(MacWifiINIT jsoncpp)
 
-target_link_libraries(MacWifi MacHTTP MacTCPHelper)
+set_target_properties(MacWifiINIT PROPERTIES
+    COMPILE_OPTIONS -ffunction-sections # make things smaller
 
-# Put everything together
+    # set a linker flag that says we want a flat piece
+    # of code in a data file, specify entry point,
+    # and add -Wl,-gc-sections to make things smaller.
+    LINK_FLAGS "-Wl,--mac-flat -Wl,-gc-sections"
+)
+
+# wrap the compiled INIT into a resource
 add_custom_command(
-	OUTPUT MacWifi.bin MacWifi.dsk
-	COMMAND ${REZ} -I ${REZ_INCLUDE_PATH}
-					${CMAKE_CURRENT_SOURCE_DIR}/resources.r
-					-o MacWifi.bin
-					--cc MacWifi.dsk
-					--cc MacWifi.init
-					-t INIT -c MWFI
-	DEPENDS MacWifi resources.r)
+    OUTPUT MacWifiINIT.rsrc.bin
+    COMMAND ${REZ} -I ${REZ_INCLUDE_PATH}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/resources.r
+                    -o MacWifiINIT.rsrc.bin                    
+    DEPENDS MacWifiINIT resources.r
+)
 
-add_custom_target(MacWifi_INIT ALL DEPENDS MacWifi.dsk)
+# Now build the application
+add_application(MacWifi
+	MacWifi.cpp
+	resources.r
+	Modules/WifiModule.cpp
+	Modules/VM300.cpp
+	Prefs.cpp
+	Comms.cpp
+	Util.cpp
+
+    # the separately compiled WDEF resource
+    ${CMAKE_CURRENT_BINARY_DIR}/MacWifiINIT.rsrc.bin   
+
+	TYPE "appe" # application extension
+	CREATOR "MWFI"
+)
+
+target_link_libraries(MacWifi MacHTTP MacTCPHelper jsoncpp)
+
+# again, add some options to make things smaller.
+set_target_properties(MacWifi PROPERTIES COMPILE_OPTIONS -ffunction-sections)
+set_target_properties(MacWifi PROPERTIES LINK_FLAGS "-Wl,-gc-sections")

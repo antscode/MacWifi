@@ -2,84 +2,72 @@
 #include <sstream> 
 #include "VM300.h"
 
-void VM300::Login()
+void VM300::GetNetworks()
 {
-	if (!_loggedIn)
-	{
-		HttpClient _httpClient;
-
-		_httpClient.Post(
-			_baseUri + "/goform/login",
-			"username=admin&z999=z999&password=admin&Login=&platform=pc",
-			std::bind(&VM300::LoginResponse, this, _1));
-
-		while (!_loggedIn)
-		{
-			_httpClient.ProcessRequests();
-		}
-	}
+	// First login
+	Comms::Http.Post(
+		_baseUri + "/goform/login",
+		"username=admin&z999=z999&password=admin&Login=&platform=pc",
+		std::bind(&VM300::LoginResponse, this, _1));
 }
 
 void VM300::LoginResponse(HttpResponse response)
 {
-	_loggedIn = true;
-}
-
-void VM300::GetNetworks(std::function<void(std::vector<Network>)> onComplete)
-{
-	WifiModule::GetNetworks(onComplete);
-
-	Login();
-
-	HttpClient _httpClient;
-
-	_httpClient.Get(
-		_baseUri + "/goform/get_web_hotspots_list",
-		std::bind(&VM300::GetNetworksResponse, this, _1));
-
-	while (_httpClient.GetStatus() != HttpClient::RequestStatus::Idle)
+	if (response.Success)
 	{
-		_httpClient.ProcessRequests();
+		// Once logged in, get networks
+		Comms::Http.Get(
+			_baseUri + "/goform/get_web_hotspots_list",
+			std::bind(&VM300::GetNetworksResponse, this, _1));
+	}
+	else
+	{
+		SaveError(response.ErrorMsg);
 	}
 }
 
 void VM300::GetNetworksResponse(HttpResponse response)
 {
-	std::vector<Network> networks;
-
-	// TODO: Any level of error handling!
-	std::stringstream ss;
-	std::string line;
-
-	ss.str(response.Content);
-
-	while (std::getline(ss, line))
+	if (response.Success)
 	{
-		std::stringstream linestream(line);
-		std::string name;
-		std::string id;
+		std::vector<Network> networks;
+	
+		std::stringstream ss;
+		std::string line;
 
-		std::getline(linestream, name, '\t'); 
-		linestream >> id;	
-		
-		bool exists = false;
-		for (std::vector<Network>::iterator it = networks.begin(); it != networks.end(); ++it)
+		ss.str(response.Content);
+
+		while (std::getline(ss, line))
 		{
-			if (it->Name == name) 
+			std::stringstream linestream(line);
+			std::string name;
+			std::string id;
+
+			std::getline(linestream, name, '\t'); 
+			linestream >> id;	
+		
+			bool exists = false;
+			for (std::vector<Network>::iterator it = networks.begin(); it != networks.end(); ++it)
 			{
-				exists = true;
-				break;
+				if (it->Name == name) 
+				{
+					exists = true;
+					break;
+				}
+			}
+
+			if (!exists && name != "[HiddenSSID]")
+			{
+				Network network;
+				network.Name = name;
+				networks.push_back(network);
 			}
 		}
 
-		if (!exists && name != "[HiddenSSID]")
-		{
-			Network network;
-			network.Name = name;
-
-			networks.push_back(network);
-		}
+		SaveNetworks(networks);
 	}
-
-	GetNetworksComplete(networks);
+	else
+	{
+		SaveError(response.ErrorMsg);
+	}
 }

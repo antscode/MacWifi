@@ -4,7 +4,6 @@
 */
 
 #include <Menus.h>
-#include "Modules/VM300.h"
 
 #ifndef ____SYSMENU_HEADER____
 #define ____SYSMENU_HEADER____
@@ -60,7 +59,5 @@ extern "C"
 	pascal long Patched_MenuSelect(Point where);
 	pascal void Patched_SystemMenu(long result);
 }
-
-void SetNetworks(std::vector<Network> networks);
 
 #endif

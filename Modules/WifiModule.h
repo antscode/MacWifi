@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <MacHTTP/HttpClient.h>
+#include "../Comms.h"
 #include "../Network.h"
 
 using namespace std::placeholders;
@@ -11,10 +13,11 @@ using namespace std::placeholders;
 class WifiModule
 {
 	public:
-		virtual void GetNetworks(std::function<void(std::vector<Network>)> onComplete);
+		virtual void GetNetworks() = 0;
 
 	protected:
-		std::function<void(std::vector<Network>)> GetNetworksComplete;
+		void SaveNetworks(std::vector<Network> networks);
+		void SaveError(std::string errorMsg);
 };
 
 #endif // _WIFI_MODULE_ 
