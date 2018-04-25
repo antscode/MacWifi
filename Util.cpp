@@ -62,3 +62,38 @@ void Util::Debug(std::string msg)
 
 	fclose(fp);
 }
+
+void Util::FrameDefaultButton(DialogPtr dialog, short itemNo, bool active)
+{
+	DialogItemType type;
+	ControlRef control;
+	Handle itemH;
+	Rect box;
+
+	GetDialogItem(dialog, itemNo, &type, &itemH, &box);
+	InsetRect(&box, -4, -4);
+	PenSize(3, 3);
+
+	if (!active)
+	{
+		RGBColor color;
+		PixPatHandle pp;
+
+		color.red = 0x8000;
+		color.green = 0x8000;
+		color.blue = 0x8000;
+
+		pp = NewPixPat();
+		MakeRGBPat(pp, &color);
+		PenPixPat(pp);
+		FrameRoundRect(&box, 16, 16);
+		DisposePixPat(pp);
+		PenNormal();
+		HiliteControl((ControlRef)itemH, 255);
+	}
+	else
+	{
+		FrameRoundRect(&box, 16, 16);
+		HiliteControl((ControlRef)itemH, 0);
+	}
+}

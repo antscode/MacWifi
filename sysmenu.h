@@ -25,7 +25,7 @@ extern "C"
 // This is an icon family for the menu. Currently the value is set
 // to something guaranteed to be available (from the system file).
 // You can set it to an icon from your resfile or to 0 for no icon.
-#define kPrefIconID		129
+#define kPrefIconID		132
 
 // * ******************************************************************************* *
 // * ******************************************************************************* *
@@ -45,19 +45,21 @@ extern "C"
 		MenuHandle mHdl;
 		Handle menuIcon;
 		FSSpec homeFile;
-		bool initialised;
+		bool dialogActive;
 	} GlobalsRec;
 
 	// * ******************************************************************************* *
 	// * ******************************************************************************* *
 	// Function Prototypes
 
+	short CurResFileAsFSSpec(FSSpec *fileSpec);
 	ProcPtr ApplyTrapPatch(short trap, ProcPtr patchPtr);
 	pascal short DetachIcons(long iconType, Handle *iconHdl, void *data);
 	pascal void Patched_InsertMenu(MenuHandle menu, short beforeID);
 	pascal void Patched_DrawMenuBar(void);
 	pascal long Patched_MenuSelect(Point where);
 	pascal void Patched_SystemMenu(long result);
+	void ShowConnectDialog(int itemId);
 }
 
 #endif

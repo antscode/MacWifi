@@ -10,6 +10,7 @@
 #include <MacMemory.h>
 #include <Menus.h>
 #include <Sound.h>
+#include <string>
 
 #include "sysmenu.h"
 #include "Prefs.h"
@@ -20,7 +21,6 @@ extern "C"
 	#include "Retro68Runtime.h"
 
 	GlobalsRec glob;
-
 
 	void _start()
 	{
@@ -48,14 +48,37 @@ extern "C"
 			!ForEachIconDo(myHandle, svAllAvailableData, NewIconActionProc((IconActionProcPtr)DetachIcons), 0))
 			glob.menuIcon = myHandle;
 
+		// Remember the location of our home rsrc file, in case we want to 
+		// load an dialog or other resource at run-time. Note: this doesn't provide
+		// any guarantee that the file will be there later, so check your errors!
+		if (CurResFileAsFSSpec(&glob.homeFile)) glob.homeFile.vRefNum = 0;
+
 		SetZone(ApplicationZone());
 
 		// Detach the INIT resource to prevent it from being purged
 		Handle h = GetResource('INIT', 128);
 		DetachResource(h);
+	}
 
-		Handle codeHndl = GetIndResource('dnrp', 1);
-		DetachResource(codeHndl);
+	short CurResFileAsFSSpec(FSSpec *fileSpec) {
+		short i, err = 0;
+		Str63 textBuff;
+		FCBPBRec fcbPB;
+
+		for (i = 0; i<sizeof(FSSpec); ((char *)fileSpec)[i++] = 0);
+
+		fcbPB.ioCompletion = 0;
+		fcbPB.ioFCBIndx = 0;
+		fcbPB.ioVRefNum = 0;
+		fcbPB.ioRefNum = CurResFile();
+		fcbPB.ioNamePtr = textBuff;
+		if (err = PBGetFCBInfoSync(&fcbPB)) return(err);
+
+		fileSpec->vRefNum = fcbPB.ioFCBVRefNum;
+		fileSpec->parID = fcbPB.ioFCBParID;
+		BlockMove(textBuff, fileSpec->name, textBuff[0] + 1);
+
+		return(err);
 	}
 
 	ProcPtr ApplyTrapPatch(short trap, ProcPtr patchPtr)
@@ -139,22 +162,6 @@ extern "C"
 			else BlockMove("\pMenu", textBuff, sizeof("\pMenu"));
 			glob.mHdl = NewMenu(glob.menuID, textBuff);
 
-			// For this example, we build it from scratch. I prefer making the
-			// AppendMenu() call with dummy args *then* SetItem() with our item.
-			// If you trust AppendMenu() with raw data, it will interpret the Menu
-			// Managers meta-chars ("-"=Separator, "("=Disabled, "/B"=Command-B, etc)
-			//AppendMenu(glob.mHdl, "\p ");
-			//SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), "\pNetwork 1");
-			//AppendMenu(glob.mHdl, "\p ");
-			//SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), "\pNetwork 2");
-			//AppendMenu(glob.mHdl, "\p ");
-			//SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), "\pNetwork 3");
-			//AppendMenu(glob.mHdl, "\p ");
-			//SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), "\pNetwork 4");
-			//AppendMenu(glob.mHdl, "\p-");
-			//AppendMenu(glob.mHdl, "\p ");
-			//SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), "\pSettings...");
-
 			InsertMenu(glob.mHdl, 0);
 
 			SetZone(saveZone);
@@ -173,23 +180,32 @@ extern "C"
 		// This function is called when the user first clicks in the menubar.
 		// Its an ideal place to update the contents of your menu on the fly
 		// to reflect current settings or conditions.
-
-		if (glob.mHdl && !glob.initialised)
+		if (glob.mHdl)
 		{
 			saveZone = GetZone();
 			SetZone(SystemZone());
 
+			// Fix me!!
+			DeleteMenuItem(glob.mHdl, 1);
+			DeleteMenuItem(glob.mHdl, 1);
+			DeleteMenuItem(glob.mHdl, 1);
+
 			Prefs prefs;
 			Json::Value networks = prefs.Data["networks"];
+
+			short resnum = FSpOpenResFile(&glob.homeFile, fsRdPerm);
 
 			for (int i = 0; i < networks.size(); ++i)
 			{
 				AppendMenu(glob.mHdl, "\p ");
 				SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), Util::StrToPStr(networks[i]["name"].asString()));
+				SetItemIcon(glob.mHdl, CountMItems(glob.mHdl), (i + 1));
+
+				if(i == 0)
+					SetItemMark(glob.mHdl, CountMItems(glob.mHdl), checkMark);
 			}
 
 			SetZone(saveZone);
-			glob.initialised = true;
 		}
 
 		proc = glob.saveMenuSelect;
@@ -213,15 +229,7 @@ extern "C"
 			// Some apps aren't careful about giving us the arrow.
 			InitCursor();
 
-			switch (itemID) {
-			case 1:
-				SysBeep(7);
-				break;
-			default:
-				SysBeep(7);
-				SysBeep(7);
-				break;
-			}
+			ShowConnectDialog(itemID);
 
 			// I don't think this is vital, but may be helpful for handlers
 			// that go into a GNE loop (such as Alert() or ModalDialog())
@@ -233,5 +241,46 @@ extern "C"
 		// Otherwise, pass it on!
 		if (menuID != glob.menuID)
 			(*proc) (result);
+	}
+
+	void ShowConnectDialog(int itemId)
+	{
+		DialogItemType type;
+		Handle itemH;
+		Rect box;
+		Prefs prefs;
+
+		short resnum = FSpOpenResFile(&glob.homeFile, fsRdPerm);
+		std::string networkName = prefs.Data["networks"][itemId - 1]["name"].asString();
+
+		ParamText(Util::StrToPStr(networkName), nil, nil, nil);
+
+		DialogPtr dialog = GetNewDialog(128, 0, (WindowPtr)-1);
+
+		MacSetPort(dialog);
+
+		Util::FrameDefaultButton(dialog, 8, false);
+
+		ControlHandle cb;
+		GetDialogItem(dialog, 6, &type, &itemH, &box);
+		cb = (ControlHandle)itemH;
+		SetControlValue(cb, 1);
+
+		short item;
+		bool dialogActive = true;
+
+		while (dialogActive)
+		{
+			ModalDialog(NULL, &item);
+
+			switch (item)
+			{
+				case 7:
+					dialogActive = false;
+					break;
+			}
+		}
+
+		DisposeDialog(dialog);
 	}
 }
