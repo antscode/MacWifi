@@ -113,6 +113,7 @@ xcopy *.APPL "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\Basilis
     <ClInclude Include="Modules\WifiModule.h" />
     <ClInclude Include="Modules\VM300.h" />
     <ClInclude Include="Util.h" />
+    <ClInclude Include="WifiEvents.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Comms.cpp" />

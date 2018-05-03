@@ -58,8 +58,13 @@ extern "C"
 	pascal void Patched_InsertMenu(MenuHandle menu, short beforeID);
 	pascal void Patched_DrawMenuBar(void);
 	pascal long Patched_MenuSelect(Point where);
-	pascal void Patched_SystemMenu(long result);
+	pascal void Patched_SystemMenu(long result); 
+
+	void GetEventAddress(AEAddressDesc* address);
+	void SendEvent(AppleEvent* appleEvent);
 	void ShowConnectDialog(int itemId);
+	void SendRefreshEvent();
+	void SendConnectEvent();
 }
 
 #endif

@@ -8,13 +8,14 @@
 #include <Traps.h>
 #include <Resources.h>
 #include <MacMemory.h>
-#include <Menus.h>
 #include <Sound.h>
 #include <string>
+#include <string.h>
 
 #include "sysmenu.h"
 #include "Prefs.h"
 #include "Util.h"
+#include "WifiEvents.h"
 
 extern "C"
 {
@@ -185,10 +186,10 @@ extern "C"
 			saveZone = GetZone();
 			SetZone(SystemZone());
 
-			// Fix me!!
-			DeleteMenuItem(glob.mHdl, 1);
-			DeleteMenuItem(glob.mHdl, 1);
-			DeleteMenuItem(glob.mHdl, 1);
+			// Clear existing networks
+			while (CountMItems(glob.mHdl) > 0) {
+				DeleteMenuItem(glob.mHdl, 1);
+			}
 
 			Prefs prefs;
 			Json::Value networks = prefs.Data["networks"];
@@ -204,6 +205,9 @@ extern "C"
 				if(i == 0)
 					SetItemMark(glob.mHdl, CountMItems(glob.mHdl), checkMark);
 			}
+
+			AppendMenu(glob.mHdl, "\p ");
+			SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), Util::StrToPStr("Refresh networks"));
 
 			SetZone(saveZone);
 		}
@@ -229,7 +233,15 @@ extern "C"
 			// Some apps aren't careful about giving us the arrow.
 			InitCursor();
 
-			ShowConnectDialog(itemID);
+			if (itemID < CountMItems(glob.mHdl))
+			{
+				ShowConnectDialog(itemID);
+			}
+			else
+			{
+				// The last menu item is the Refresh item
+				SendRefreshEvent();
+			}
 
 			// I don't think this is vital, but may be helpful for handlers
 			// that go into a GNE loop (such as Alert() or ModalDialog())
@@ -276,6 +288,12 @@ extern "C"
 			switch (item)
 			{
 				case 7:
+					SendConnectEvent(); // remove me!!
+					dialogActive = false;
+					break;
+
+				case 8:
+					SendConnectEvent();
 					dialogActive = false;
 					break;
 			}
@@ -283,4 +301,67 @@ extern "C"
 
 		DisposeDialog(dialog);
 	}
+}
+
+void GetEventAddress(AEAddressDesc* address)
+{
+	OSType appSig = 'MWFI';
+
+	AECreateDesc(
+		typeApplSignature,
+		(Ptr)(&appSig),
+		(Size)sizeof(appSig),
+		address);
+}
+
+void SendEvent(AppleEvent* appleEvent)
+{
+	AppleEvent reply;
+
+	AESend(
+		appleEvent,
+		&reply,
+		kAENoReply + kAECanInteract,
+		kAENormalPriority,
+		kAEDefaultTimeout, nil, nil);
+}
+
+void SendRefreshEvent()
+{
+	AEAddressDesc address;
+	AppleEvent appleEvent;
+
+	GetEventAddress(&address);
+
+	AECreateAppleEvent(
+		kWifiClass,
+		kGetNetworks,
+		&address,
+		kAutoGenerateReturnID,
+		1L,
+		&appleEvent);
+
+	SendEvent(&appleEvent);
+}
+
+void SendConnectEvent()
+{
+	AEAddressDesc address;
+	AppleEvent appleEvent;
+	
+	GetEventAddress(&address);
+
+	AECreateAppleEvent(
+		kWifiClass,
+		kConnectNetwork,
+		&address,
+		kAutoGenerateReturnID, 
+		1L,
+		&appleEvent);
+
+	char ssid[100] = "test";
+
+	AEPutParamPtr(&appleEvent, kSSIDParam, typeChar, ssid, strlen(ssid));
+
+	SendEvent(&appleEvent);
 }

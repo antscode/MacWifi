@@ -1,16 +1,19 @@
 #include <Events.h>
-#include <AppleEvents.h>
+#include "WifiEvents.h"
 #include "Modules\VM300.h"
 
 void EventInit();
-pascal OSErr Quit(AppleEvent appleEvent, AppleEvent reply, long refCon);
+pascal OSErr Quit(AppleEvent* appleEvent, AppleEvent* reply, long refCon);
+pascal OSErr GetNetworks(AppleEvent* appleEvent, AppleEvent* reply, long refCon);
+pascal OSErr ConnectNetwork(AppleEvent* appleEvent, AppleEvent* reply, long refCon);
 bool _run = true;
+bool _getNetworks = true;
 
 int main()
 {	
 	VM300 vm300;
 	EventRecord event;
-	bool getNetworks = true;
+	
 	int sleep = 60;
 
 	EventInit();
@@ -28,10 +31,10 @@ int main()
 		}
 		else
 		{
-			if (getNetworks)
+			if (_getNetworks)
 			{
 				vm300.GetNetworks();
-				getNetworks = false;
+				_getNetworks = false;
 			}
 
 			Comms::Http.ProcessRequests();
@@ -47,9 +50,40 @@ void EventInit()
 		(AEEventHandlerUPP)Quit,
 		0L,
 		false);
+
+	AEInstallEventHandler(
+		kWifiClass,
+		kGetNetworks,
+		(AEEventHandlerUPP)GetNetworks,
+		0L,
+		false);
+
+	AEInstallEventHandler(
+		kWifiClass,
+		kConnectNetwork,
+		(AEEventHandlerUPP)ConnectNetwork,
+		0L,
+		false);
 }
 
-pascal OSErr Quit(AppleEvent appleEvent, AppleEvent reply, long refCon)
+pascal OSErr Quit(AppleEvent* appleEvent, AppleEvent* reply, long refCon)
 {
 	_run = false;
+}
+
+pascal OSErr GetNetworks(AppleEvent* appleEvent, AppleEvent* reply, long refCon)
+{
+	_getNetworks = true;
+}
+
+pascal OSErr ConnectNetwork(AppleEvent* appleEvent, AppleEvent* reply, long refCon)
+{
+	OSErr   err;
+	char blah[100];
+	Size actualSize;
+	DescType typeCode;
+
+	err = AEGetParamPtr(appleEvent, 'ssid', typeChar, &typeCode, (Ptr)blah, sizeof(blah), &actualSize);
+
+	Util::Debug(std::string(blah));
 }
