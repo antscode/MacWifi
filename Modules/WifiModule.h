@@ -8,6 +8,7 @@
 #include "../Comms.h"
 #include "../Network.h"
 
+using namespace std;
 using namespace std::placeholders;
 
 enum WifiMode

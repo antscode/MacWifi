@@ -107,6 +107,7 @@ xcopy *.APPL "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\Basilis
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Comms.h" />
+    <ClInclude Include="MacWifi.h" />
     <ClInclude Include="Network.h" />
     <ClInclude Include="Prefs.h" />
     <ClInclude Include="sysmenu.h" />

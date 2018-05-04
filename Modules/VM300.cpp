@@ -26,7 +26,35 @@ void VM300::LoginResponse(HttpResponse response)
 
 void VM300::GetNetworks()
 {
-	Login(std::bind(&VM300::GetNetworksRequest, this));
+	Login(std::bind(&VM300::GetConnectedNetworkRequest, this));
+}
+
+void VM300::GetConnectedNetworkRequest()
+{
+	Comms::Http.Get(
+		_baseUri + "/adm/status.asp",
+		std::bind(&VM300::GetConnectedNetworkResponse, this, _1));
+}
+
+void VM300::GetConnectedNetworkResponse(HttpResponse response)
+{
+	string searchStart = "SSID</td>\r\n        <td>";
+	size_t startLength = searchStart.length();
+	size_t start = response.Content.find(searchStart);
+	size_t end;
+
+	_currentSsid = "";
+
+	if (start != string::npos)
+	{
+		end = response.Content.find("</td>", start + startLength);
+
+		_currentSsid = response.Content.substr(
+			start + startLength,
+			end - start - startLength);
+	}
+
+	GetNetworksRequest();
 }
 
 void VM300::GetNetworksRequest()
@@ -42,16 +70,16 @@ void VM300::GetNetworksResponse(HttpResponse response)
 	{
 		std::vector<Network> networks;
 	
-		std::stringstream ss;
-		std::string line;
+		stringstream ss;
+		string line;
 
 		ss.str(response.Content);
 
 		while (std::getline(ss, line))
 		{
-			std::stringstream linestream(line);
-			std::string name;
-			std::string id;
+			stringstream linestream(line);
+			string name;
+			string id;
 
 			std::getline(linestream, name, '\t'); 
 			linestream >> id;	
@@ -70,6 +98,7 @@ void VM300::GetNetworksResponse(HttpResponse response)
 			{
 				Network network;
 				network.Name = name;
+				network.Connected = (name == _currentSsid);
 				networks.push_back(network);
 			}
 		}
@@ -82,27 +111,39 @@ void VM300::GetNetworksResponse(HttpResponse response)
 	}
 }
 
-void VM300::Connect(std::string ssid, WifiMode mode, WifiEncryption encryption, std::string pwd)
+void VM300::Connect(string ssid, WifiMode mode, WifiEncryption encryption, string pwd)
 {
 	_ssid = ssid;
 	_mode = mode;
 	_encryption = encryption;
 	_pwd = pwd;
 
-	Login(std::bind(&VM300::ConnectRequest, this));
+	Login(std::bind(&VM300::DeleteHotspotsRequest, this));
+}
+
+void VM300::DeleteHotspotsRequest()
+{
+	Comms::Http.Post(
+		_baseUri + "/goform/deleteAllHotspots", "",
+		std::bind(&VM300::DeleteHotspotsResponse, this, _1));
+}
+
+void VM300::DeleteHotspotsResponse(HttpResponse response)
+{
+	ConnectRequest();
 }
 
 void VM300::ConnectRequest()
 {
 	Comms::Http.Post(
 		_baseUri + "/goform/wirelessBrdgApcli",
-		"apcli_ssid=" + _ssid +
+		"apcli_ssid=" + Util::UrlEncode(_ssid) +
 		"&apcli_mode=" + GetWifiModeStr(_mode) +
 		"&apcli_enc=" + GetEncryptionStr(_encryption) +
 		"&apcli_ishide=0"
-		"&apcli_wpapsk=" + _pwd +
+		"&apcli_wpapsk=" + Util::UrlEncode(_pwd) +
 		"&apcli_issyn=1"
-		"&apcli_repeaterssid=" + _ssid + "_64"
+		"&apcli_repeaterssid=" + Util::UrlEncode(_ssid) + "_64"
 		"&ra_off=0"
 		"&EnDynamicMatchPara=1"
 		"&isDnsNeedChange=1"
@@ -143,7 +184,7 @@ void VM300::RestartResponse(HttpResponse response)
 	// Do nothing I guess...
 }
 
-std::string VM300::GetWifiModeStr(WifiMode mode)
+string VM300::GetWifiModeStr(WifiMode mode)
 {
 	switch (mode)
 	{
@@ -155,7 +196,7 @@ std::string VM300::GetWifiModeStr(WifiMode mode)
 	}
 }
 
-std::string VM300::GetEncryptionStr(WifiEncryption encryption) 
+string VM300::GetEncryptionStr(WifiEncryption encryption) 
 {
 	switch (encryption)
 	{

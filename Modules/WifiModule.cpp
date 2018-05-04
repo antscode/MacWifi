@@ -14,6 +14,7 @@ void WifiModule::SaveNetworks(std::vector<Network> networks)
 		Json::Value network;
 
 		network["name"] = it->Name;
+		network["connected"] = it->Connected;
 
 		_prefs.Data["networks"].append(network);
 	}

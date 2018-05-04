@@ -202,7 +202,7 @@ extern "C"
 				SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), Util::StrToPStr(networks[i]["name"].asString()));
 				SetItemIcon(glob.mHdl, CountMItems(glob.mHdl), (i + 1));
 
-				if(i == 0)
+				if(networks[i]["connected"].asBool())
 					SetItemMark(glob.mHdl, CountMItems(glob.mHdl), checkMark);
 			}
 
@@ -261,11 +261,12 @@ extern "C"
 		Handle itemH;
 		Rect box;
 		Prefs prefs;
+		Str255 text;
 
 		short resnum = FSpOpenResFile(&glob.homeFile, fsRdPerm);
-		std::string networkName = prefs.Data["networks"][itemId - 1]["name"].asString();
+		std::string ssid = prefs.Data["networks"][itemId - 1]["name"].asString();
 
-		ParamText(Util::StrToPStr(networkName), nil, nil, nil);
+		ParamText(Util::StrToPStr(ssid), nil, nil, nil);
 
 		DialogPtr dialog = GetNewDialog(128, 0, (WindowPtr)-1);
 
@@ -273,6 +274,7 @@ extern "C"
 
 		Util::FrameDefaultButton(dialog, 8, false);
 
+		
 		ControlHandle cb;
 		GetDialogItem(dialog, 6, &type, &itemH, &box);
 		cb = (ControlHandle)itemH;
@@ -285,15 +287,19 @@ extern "C"
 		{
 			ModalDialog(NULL, &item);
 
+			// Set enabled state of Join button based on password length
+			GetDialogItem(dialog, 4, &type, &itemH, &box);
+			GetDialogItemText(itemH, text);
+			Util::FrameDefaultButton(dialog, 8, (text[0] > 0));
+
 			switch (item)
 			{
 				case 7:
-					SendConnectEvent(); // remove me!!
 					dialogActive = false;
 					break;
 
 				case 8:
-					SendConnectEvent();
+					SendConnectEvent((char*)prefs.Data["networks"][itemId - 1]["name"].asCString(), Util::PtoCStr(text));
 					dialogActive = false;
 					break;
 			}
@@ -344,11 +350,11 @@ void SendRefreshEvent()
 	SendEvent(&appleEvent);
 }
 
-void SendConnectEvent()
+void SendConnectEvent(char* ssid, char* pwd)
 {
 	AEAddressDesc address;
 	AppleEvent appleEvent;
-	
+
 	GetEventAddress(&address);
 
 	AECreateAppleEvent(
@@ -359,9 +365,8 @@ void SendConnectEvent()
 		1L,
 		&appleEvent);
 
-	char ssid[100] = "test";
-
 	AEPutParamPtr(&appleEvent, kSSIDParam, typeChar, ssid, strlen(ssid));
+	AEPutParamPtr(&appleEvent, kPasswordParam, typeChar, pwd, strlen(pwd));
 
 	SendEvent(&appleEvent);
 }

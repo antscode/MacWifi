@@ -9,21 +9,28 @@ class VM300 : public WifiModule
 {
 	public:
 		virtual void GetNetworks();
-		virtual void Connect(std::string ssid, WifiMode mode, WifiEncryption encryption, std::string pwd);
+		virtual void Connect(string ssid, WifiMode mode, WifiEncryption encryption, string pwd);
 		
 	private:
-		const std::string _baseUri = "http://vonets.cfg";
+		const string _baseUri = "http://vonets.cfg";
 		std::function<void()> _onLoginComplete;
-		std::string _ssid;
+		string _ssid;
 		WifiMode _mode;
 		WifiEncryption _encryption;
-		std::string _pwd;
+		string _pwd;
+		string _currentSsid;
 
 		void Login(std::function<void()> onComplete);
 		void LoginResponse(HttpResponse response);
 		
+		void GetConnectedNetworkRequest();
+		void GetConnectedNetworkResponse(HttpResponse response);
+
 		void GetNetworksRequest();
 		void GetNetworksResponse(HttpResponse response);
+
+		void DeleteHotspotsRequest();
+		void DeleteHotspotsResponse(HttpResponse response);
 
 		void ConnectRequest();
 		void ConnectResponse(HttpResponse response);
@@ -32,8 +39,8 @@ class VM300 : public WifiModule
 		void RestartRequest();
 		void RestartResponse(HttpResponse response);
 
-		std::string GetWifiModeStr(WifiMode mode);
-		std::string GetEncryptionStr(WifiEncryption encryption);
+		string GetWifiModeStr(WifiMode mode);
+		string GetEncryptionStr(WifiEncryption encryption);
 };
 
 #endif // _VM300_

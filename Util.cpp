@@ -1,3 +1,6 @@
+#include <cctype>
+#include <iomanip>
+#include <sstream>
 #include <string.h>
 #include <stdio.h>
 #include "Util.h"
@@ -96,4 +99,28 @@ void Util::FrameDefaultButton(DialogPtr dialog, short itemNo, bool active)
 		FrameRoundRect(&box, 16, 16);
 		HiliteControl((ControlRef)itemH, 0);
 	}
+}
+
+string Util::UrlEncode(string &value) 
+{
+	ostringstream escaped;
+	escaped.fill('0');
+	escaped << hex;
+
+	for (string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+		string::value_type c = (*i);
+
+		// Keep alphanumeric and other accepted characters intact
+		if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+			escaped << c;
+			continue;
+		}
+
+		// Any other characters are percent-encoded
+		escaped << uppercase;
+		escaped << '%' << setw(2) << int((unsigned char)c);
+		escaped << nouppercase;
+	}
+
+	return escaped.str();
 }

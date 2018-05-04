@@ -64,7 +64,7 @@ extern "C"
 	void SendEvent(AppleEvent* appleEvent);
 	void ShowConnectDialog(int itemId);
 	void SendRefreshEvent();
-	void SendConnectEvent();
+	void SendConnectEvent(char* ssid, char* pwd);
 }
 
 #endif
