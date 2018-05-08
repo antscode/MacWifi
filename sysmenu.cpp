@@ -9,19 +9,19 @@
 #include <Resources.h>
 #include <MacMemory.h>
 #include <Sound.h>
-#include <string>
 #include <string.h>
 
 #include "sysmenu.h"
 #include "Prefs.h"
 #include "Util.h"
-#include "WifiEvents.h"
+#include "WifiShared.h"
 
 extern "C"
 {
 	#include "Retro68Runtime.h"
 
 	GlobalsRec glob;
+	WifiData sharedData;
 
 	void _start()
 	{
@@ -31,6 +31,10 @@ extern "C"
 
 		// Setup Global Data
 		SetZone(SystemZone());
+
+		// Save memory location of shared data so the background app can find it
+		InitSharedData();
+		SaveSharedMemoryLocation();
 
 		// Setup Handlers
 		glob.saveInsertMenu = (InsertMenuProcPtr)ApplyTrapPatch(_InsertMenu, (ProcPtr)Patched_InsertMenu);
@@ -59,6 +63,34 @@ extern "C"
 		// Detach the INIT resource to prevent it from being purged
 		Handle h = GetResource('INIT', 128);
 		DetachResource(h);
+	}
+
+	void InitSharedData()
+	{
+		sharedData.Status = ScanRequest;
+		sharedData.Error = false;
+		sharedData.UpdateUI = true;
+	}
+
+	void SaveSharedMemoryLocation()
+	{
+		MemLocHandle memHandle = (MemLocHandle)Get1Resource('memr', 128);
+
+		if (memHandle != nil)
+		{
+			**memHandle = (int)&sharedData;
+			ChangedResource((Handle)memHandle);
+		}
+		else
+		{
+			memHandle = MemLocHandle(NewHandle(sizeof(MemLoc)));
+
+			**memHandle = (int)&sharedData;
+			AddResource((Handle)memHandle, 'memr', 128, "\pshared memory location");
+		}
+
+		UpdateResFile(CurResFile());
+		ReleaseResource((Handle)memHandle);
 	}
 
 	short CurResFileAsFSSpec(FSSpec *fileSpec) {
@@ -177,39 +209,89 @@ extern "C"
 		long value;
 		MenuSelectProcPtr proc;
 		THz saveZone;
+		short itemCount;
 
 		// This function is called when the user first clicks in the menubar.
 		// Its an ideal place to update the contents of your menu on the fly
 		// to reflect current settings or conditions.
 		if (glob.mHdl)
 		{
-			saveZone = GetZone();
-			SetZone(SystemZone());
+			// Open the resource file to get icons, dialogs etc.
+			FSpOpenResFile(&glob.homeFile, fsRdPerm);  // TODO: Stop this running so often!
+			// TODO: Prevent conflicts with other resource files?
 
-			// Clear existing networks
-			while (CountMItems(glob.mHdl) > 0) {
-				DeleteMenuItem(glob.mHdl, 1);
-			}
-
-			Prefs prefs;
-			Json::Value networks = prefs.Data["networks"];
-
-			short resnum = FSpOpenResFile(&glob.homeFile, fsRdPerm);
-
-			for (int i = 0; i < networks.size(); ++i)
+			if (sharedData.UpdateUI)
 			{
+				saveZone = GetZone();
+				SetZone(SystemZone());
+
+				itemCount = CountMItems(glob.mHdl);
+
+				// Clear existing menu items
+				while (itemCount > 0) {
+					DeleteMenuItem(glob.mHdl, 1);
+					itemCount--;
+				}
+
+				// Append any known networks
+				for (std::vector<Network>::iterator it = sharedData.Networks.begin(); it != sharedData.Networks.end(); ++it)
+				{
+					AppendMenu(glob.mHdl, "\p ");
+					itemCount++;
+
+					SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr(it->Name));
+					SetItemIcon(glob.mHdl, itemCount, 1); // Finish me!
+
+					if (it->Connected)
+						SetItemMark(glob.mHdl, itemCount, checkMark);
+
+					if (sharedData.Status == ConnectRequest ||
+						sharedData.Status == Connecting)
+					{
+						DisableItem(glob.mHdl, itemCount);
+					}
+				}
+
+				if (sharedData.Error)
+				{
+					AppendMenu(glob.mHdl, "\p ");
+					itemCount++;
+					SetMenuItemText(glob.mHdl, itemCount, "\pError");
+					SetItemIcon(glob.mHdl, itemCount, 5);
+				}
+
+				if (itemCount > 0)
+				{
+					// Add separator
+					AppendMenu(glob.mHdl, "\p-");
+					itemCount++;
+				}
+
 				AppendMenu(glob.mHdl, "\p ");
-				SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), Util::StrToPStr(networks[i]["name"].asString()));
-				SetItemIcon(glob.mHdl, CountMItems(glob.mHdl), (i + 1));
+				itemCount++;
 
-				if(networks[i]["connected"].asBool())
-					SetItemMark(glob.mHdl, CountMItems(glob.mHdl), checkMark);
+				switch (sharedData.Status)
+				{
+					case ScanRequest:
+					case Scanning:
+						SetMenuItemText(glob.mHdl, itemCount, "\pScanning networks...");
+						DisableItem(glob.mHdl, itemCount);
+						break;
+
+					case ConnectRequest:
+					case Connecting:
+						SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr("Connecting to " + sharedData.ConnectSSID + "..."));
+						DisableItem(glob.mHdl, itemCount);
+						break;
+
+					default:
+						SetMenuItemText(glob.mHdl, itemCount, "\pRefresh networks");
+						break;
+				}
+
+				SetZone(saveZone);
+				sharedData.UpdateUI = false;
 			}
-
-			AppendMenu(glob.mHdl, "\p ");
-			SetMenuItemText(glob.mHdl, CountMItems(glob.mHdl), Util::StrToPStr("Refresh networks"));
-
-			SetZone(saveZone);
 		}
 
 		proc = glob.saveMenuSelect;
@@ -220,8 +302,9 @@ extern "C"
 
 	pascal void Patched_SystemMenu(long result)
 	{
-		short menuID, itemID;
-		SystemMenuProcPtr proc;
+		short menuID, itemID, iconID;
+		SystemMenuProcPtr proc; 
+
 
 		menuID = (result & 0xFFFF0000) >> 16;
 		itemID = result & 0x0000FFFF;
@@ -235,12 +318,25 @@ extern "C"
 
 			if (itemID < CountMItems(glob.mHdl))
 			{
-				ShowConnectDialog(itemID);
+				GetItemIcon(glob.mHdl, itemID, &iconID);
+
+				if (iconID == 5)
+				{
+					// Error item selected, show error message
+					std::string errMsg = sharedData.ErrorMsg.c_str();
+					ParamText(Util::StrToPStr(errMsg), nil, nil, nil);
+					StopAlert(129, nil);
+				}
+				else
+				{
+					// Network selected
+					ShowConnectDialog(itemID);
+				}
 			}
 			else
 			{
 				// The last menu item is the Refresh item
-				SendRefreshEvent();
+				sharedData.Status = ScanRequest;
 			}
 
 			// I don't think this is vital, but may be helpful for handlers
@@ -260,21 +356,17 @@ extern "C"
 		DialogItemType type;
 		Handle itemH;
 		Rect box;
-		Prefs prefs;
-		Str255 text;
+		Str255 ssid, text;
 
-		short resnum = FSpOpenResFile(&glob.homeFile, fsRdPerm);
-		std::string ssid = prefs.Data["networks"][itemId - 1]["name"].asString();
-
-		ParamText(Util::StrToPStr(ssid), nil, nil, nil);
+		// Set ssid label in dialog
+		GetMenuItemText(glob.mHdl, itemId, ssid);
+		ParamText(ssid, nil, nil, nil);
 
 		DialogPtr dialog = GetNewDialog(128, 0, (WindowPtr)-1);
-
 		MacSetPort(dialog);
 
 		Util::FrameDefaultButton(dialog, 8, false);
 
-		
 		ControlHandle cb;
 		GetDialogItem(dialog, 6, &type, &itemH, &box);
 		cb = (ControlHandle)itemH;
@@ -299,7 +391,10 @@ extern "C"
 					break;
 
 				case 8:
-					SendConnectEvent((char*)prefs.Data["networks"][itemId - 1]["name"].asCString(), Util::PtoCStr(text));
+					sharedData.ConnectSSID = Util::PtoStr(ssid);
+					sharedData.ConnectPwd = Util::PtoStr(text);
+					sharedData.Status = ConnectRequest;
+
 					dialogActive = false;
 					break;
 			}
@@ -307,66 +402,4 @@ extern "C"
 
 		DisposeDialog(dialog);
 	}
-}
-
-void GetEventAddress(AEAddressDesc* address)
-{
-	OSType appSig = 'MWFI';
-
-	AECreateDesc(
-		typeApplSignature,
-		(Ptr)(&appSig),
-		(Size)sizeof(appSig),
-		address);
-}
-
-void SendEvent(AppleEvent* appleEvent)
-{
-	AppleEvent reply;
-
-	AESend(
-		appleEvent,
-		&reply,
-		kAENoReply + kAECanInteract,
-		kAENormalPriority,
-		kAEDefaultTimeout, nil, nil);
-}
-
-void SendRefreshEvent()
-{
-	AEAddressDesc address;
-	AppleEvent appleEvent;
-
-	GetEventAddress(&address);
-
-	AECreateAppleEvent(
-		kWifiClass,
-		kGetNetworks,
-		&address,
-		kAutoGenerateReturnID,
-		1L,
-		&appleEvent);
-
-	SendEvent(&appleEvent);
-}
-
-void SendConnectEvent(char* ssid, char* pwd)
-{
-	AEAddressDesc address;
-	AppleEvent appleEvent;
-
-	GetEventAddress(&address);
-
-	AECreateAppleEvent(
-		kWifiClass,
-		kConnectNetwork,
-		&address,
-		kAutoGenerateReturnID, 
-		1L,
-		&appleEvent);
-
-	AEPutParamPtr(&appleEvent, kSSIDParam, typeChar, ssid, strlen(ssid));
-	AEPutParamPtr(&appleEvent, kPasswordParam, typeChar, pwd, strlen(pwd));
-
-	SendEvent(&appleEvent);
 }

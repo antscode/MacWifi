@@ -1,7 +1,11 @@
 #include <Events.h>
+#include <Resources.h>
 #include <string.h>
-#include "WifiEvents.h"
+#include "WifiShared.h"
 #include "MacWifi.h"
+
+WifiData* _sharedDataPtr;
+VM300 _wifiModule;
 
 int main()
 {	
@@ -10,7 +14,7 @@ int main()
 	int sleep = 60;
 
 	EventInit();
-	_wifiModule.GetNetworks();
+	GetSharedData();
 
 	while (_run)
 	{
@@ -25,9 +29,31 @@ int main()
 		}
 		else
 		{
+			switch (_sharedDataPtr->Status)
+			{
+				case ScanRequest:
+					_sharedDataPtr->Status = Scanning;
+					_sharedDataPtr->Error = false;
+					_wifiModule.GetNetworks();
+					break;
+
+				case ConnectRequest:
+					_sharedDataPtr->Status = Connecting;
+					_sharedDataPtr->Error = false;
+					_wifiModule.Connect(_sharedDataPtr->ConnectSSID, WPA2PSK, AES, _sharedDataPtr->ConnectPwd);
+					break;
+			}
+
 			Comms::Http.ProcessRequests();
 		}
 	}
+}
+
+void GetSharedData()
+{
+	MemLocHandle memHandle = (MemLocHandle)Get1Resource('memr', 128);
+	_sharedDataPtr = (WifiData*)**memHandle;
+	_wifiModule.WifiDataPtr = _sharedDataPtr;
 }
 
 void EventInit()
@@ -38,44 +64,9 @@ void EventInit()
 		(AEEventHandlerUPP)Quit,
 		0L,
 		false);
-
-	AEInstallEventHandler(
-		kWifiClass,
-		kGetNetworks,
-		(AEEventHandlerUPP)GetNetworks,
-		0L,
-		false);
-
-	AEInstallEventHandler(
-		kWifiClass,
-		kConnectNetwork,
-		(AEEventHandlerUPP)ConnectNetwork,
-		0L,
-		false);
 }
 
 pascal OSErr Quit(AppleEvent* appleEvent, AppleEvent* reply, long refCon)
 {
 	_run = false;
-}
-
-pascal OSErr GetNetworks(AppleEvent* appleEvent, AppleEvent* reply, long refCon)
-{
-	_wifiModule.GetNetworks();
-}
-
-pascal OSErr ConnectNetwork(AppleEvent* appleEvent, AppleEvent* reply, long refCon)
-{
-	Size actualSize;
-	DescType typeCode;
-	char ssid[255];
-	char pwd[255];
-
-	memset(&ssid, 0, sizeof(ssid));
-	memset(&pwd, 0, sizeof(pwd));
-
-	AEGetParamPtr(appleEvent, kSSIDParam, typeChar, &typeCode, ssid, sizeof(ssid), &actualSize);
-	AEGetParamPtr(appleEvent, kPasswordParam, typeChar, &typeCode, pwd, sizeof(ssid), &actualSize);
-
-	_wifiModule.Connect(std::string(ssid), WPA2PSK, AES, std::string(pwd));
 }

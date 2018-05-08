@@ -25,7 +25,7 @@ extern "C"
 // This is an icon family for the menu. Currently the value is set
 // to something guaranteed to be available (from the system file).
 // You can set it to an icon from your resfile or to 0 for no icon.
-#define kPrefIconID		132
+#define kPrefIconID		129
 
 // * ******************************************************************************* *
 // * ******************************************************************************* *
@@ -52,6 +52,8 @@ extern "C"
 	// * ******************************************************************************* *
 	// Function Prototypes
 
+	void InitSharedData();
+	void SaveSharedMemoryLocation();
 	short CurResFileAsFSSpec(FSSpec *fileSpec);
 	ProcPtr ApplyTrapPatch(short trap, ProcPtr patchPtr);
 	pascal short DetachIcons(long iconType, Handle *iconHdl, void *data);
@@ -59,12 +61,7 @@ extern "C"
 	pascal void Patched_DrawMenuBar(void);
 	pascal long Patched_MenuSelect(Point where);
 	pascal void Patched_SystemMenu(long result); 
-
-	void GetEventAddress(AEAddressDesc* address);
-	void SendEvent(AppleEvent* appleEvent);
 	void ShowConnectDialog(int itemId);
-	void SendRefreshEvent();
-	void SendConnectEvent(char* ssid, char* pwd);
 }
 
 #endif

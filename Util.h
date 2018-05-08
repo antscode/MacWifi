@@ -7,6 +7,7 @@ class Util
 {
 	public:
 		static char* PtoCStr(unsigned char *s);
+		static std::string PtoStr(unsigned char *s);
 		static unsigned char* CtoPStr(char *s);
 		static unsigned char* StrToPStr(string str);
 		static void Debug(string msg);

@@ -20,6 +20,11 @@ char* Util::PtoCStr(unsigned char *s)
 	return (char *)s;
 }
 
+std::string Util::PtoStr(unsigned char *s)
+{
+	return std::string(PtoCStr(s));
+}
+
 unsigned char* Util::CtoPStr(char *s)
 {
 	int theLen;

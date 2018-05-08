@@ -20,7 +20,7 @@ void VM300::LoginResponse(HttpResponse response)
 	}
 	else
 	{
-		SaveError(response.ErrorMsg);
+		DoError("Login: " + response.ErrorMsg);
 	}
 }
 
@@ -38,23 +38,30 @@ void VM300::GetConnectedNetworkRequest()
 
 void VM300::GetConnectedNetworkResponse(HttpResponse response)
 {
-	string searchStart = "SSID</td>\r\n        <td>";
-	size_t startLength = searchStart.length();
-	size_t start = response.Content.find(searchStart);
-	size_t end;
-
-	_currentSsid = "";
-
-	if (start != string::npos)
+	if (response.Success)
 	{
-		end = response.Content.find("</td>", start + startLength);
+		string searchStart = "SSID</td>\r\n        <td>";
+		size_t startLength = searchStart.length();
+		size_t start = response.Content.find(searchStart);
+		size_t end;
 
-		_currentSsid = response.Content.substr(
-			start + startLength,
-			end - start - startLength);
+		_currentSsid = "";
+
+		if (start != string::npos)
+		{
+			end = response.Content.find("</td>", start + startLength);
+
+			_currentSsid = response.Content.substr(
+				start + startLength,
+				end - start - startLength);
+		}
+
+		GetNetworksRequest();
 	}
-
-	GetNetworksRequest();
+	else
+	{
+		DoError("GetConnectedNetwork: " + response.ErrorMsg);
+	}
 }
 
 void VM300::GetNetworksRequest()
@@ -68,7 +75,9 @@ void VM300::GetNetworksResponse(HttpResponse response)
 {
 	if (response.Success)
 	{
-		std::vector<Network> networks;
+		vector<Network> networks = WifiDataPtr->Networks;
+
+		networks.clear();
 	
 		stringstream ss;
 		string line;
@@ -103,11 +112,12 @@ void VM300::GetNetworksResponse(HttpResponse response)
 			}
 		}
 
-		SaveNetworks(networks);
+		WifiDataPtr->Status = Idle;
+		WifiDataPtr->UpdateUI = true;
 	}
 	else
 	{
-		SaveError(response.ErrorMsg);
+		DoError("GetNetworks: " + response.ErrorMsg);
 	}
 }
 
@@ -130,7 +140,14 @@ void VM300::DeleteHotspotsRequest()
 
 void VM300::DeleteHotspotsResponse(HttpResponse response)
 {
-	ConnectRequest();
+	if (response.Success)
+	{
+		ConnectRequest();
+	}
+	else
+	{
+		DoError("DeleteHotspots: " + response.ErrorMsg);
+	}
 }
 
 void VM300::ConnectRequest()
@@ -162,7 +179,7 @@ void VM300::ConnectResponse(HttpResponse response)
 	}
 	else
 	{
-		SaveError(response.ErrorMsg);
+		DoError("Connect: " + response.ErrorMsg);
 	}
 }
 
@@ -181,7 +198,36 @@ void VM300::RestartRequest()
 
 void VM300::RestartResponse(HttpResponse response)
 {
-	// Do nothing I guess...
+	if (response.Success)
+	{
+		// Start polling for module to come back up
+		RestartCompleteRequest();
+	}
+	else
+	{
+		DoError("Restart: " + response.ErrorMsg);
+	}
+}
+
+void VM300::RestartCompleteRequest()
+{
+	Comms::Http.Get(
+		_baseUri + "/a.asp",
+		std::bind(&VM300::RestartCompleteResponse, this, _1));
+}
+
+void VM300::RestartCompleteResponse(HttpResponse response)
+{
+	if (response.Success)
+	{
+		// Restart complete, refresh networks
+		GetNetworks();
+	}
+	else
+	{
+		// Module not available, so try again
+		RestartCompleteRequest(); // TODO: Max tries would be wise
+	}
 }
 
 string VM300::GetWifiModeStr(WifiMode mode)
