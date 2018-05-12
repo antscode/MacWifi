@@ -11,14 +11,12 @@ int main()
 {	
 	EventRecord event;
 	
-	int sleep = 60;
-
 	EventInit();
 	GetSharedData();
 
 	while (_run)
 	{
-		if (WaitNextEvent(everyEvent, &event, sleep, NULL))
+		if (WaitNextEvent(everyEvent, &event, 0, NULL))
 		{
 			switch (event.what)
 			{

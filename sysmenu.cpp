@@ -214,84 +214,76 @@ extern "C"
 		// This function is called when the user first clicks in the menubar.
 		// Its an ideal place to update the contents of your menu on the fly
 		// to reflect current settings or conditions.
-		if (glob.mHdl)
+		if (glob.mHdl && sharedData.UpdateUI)
 		{
-			// Open the resource file to get icons, dialogs etc.
-			FSpOpenResFile(&glob.homeFile, fsRdPerm);  // TODO: Stop this running so often!
-			// TODO: Prevent conflicts with other resource files?
+			saveZone = GetZone();
+			SetZone(SystemZone());
 
-			if (sharedData.UpdateUI)
+			itemCount = CountMItems(glob.mHdl);
+
+			// Clear existing menu items
+			while (itemCount > 0) {
+				DeleteMenuItem(glob.mHdl, 1);
+				itemCount--;
+			}
+
+			// Append any known networks
+			for (std::vector<Network>::iterator it = sharedData.Networks.begin(); it != sharedData.Networks.end(); ++it)
 			{
-				saveZone = GetZone();
-				SetZone(SystemZone());
-
-				itemCount = CountMItems(glob.mHdl);
-
-				// Clear existing menu items
-				while (itemCount > 0) {
-					DeleteMenuItem(glob.mHdl, 1);
-					itemCount--;
-				}
-
-				// Append any known networks
-				for (std::vector<Network>::iterator it = sharedData.Networks.begin(); it != sharedData.Networks.end(); ++it)
-				{
-					AppendMenu(glob.mHdl, "\p ");
-					itemCount++;
-
-					SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr(it->Name));
-					SetItemIcon(glob.mHdl, itemCount, 1); // Finish me!
-
-					if (it->Connected)
-						SetItemMark(glob.mHdl, itemCount, checkMark);
-
-					if (sharedData.Status == ConnectRequest ||
-						sharedData.Status == Connecting)
-					{
-						DisableItem(glob.mHdl, itemCount);
-					}
-				}
-
-				if (sharedData.Error)
-				{
-					AppendMenu(glob.mHdl, "\p ");
-					itemCount++;
-					SetMenuItemText(glob.mHdl, itemCount, "\pError");
-					SetItemIcon(glob.mHdl, itemCount, 5);
-				}
-
-				if (itemCount > 0)
-				{
-					// Add separator
-					AppendMenu(glob.mHdl, "\p-");
-					itemCount++;
-				}
-
 				AppendMenu(glob.mHdl, "\p ");
 				itemCount++;
 
-				switch (sharedData.Status)
+				std::string ssid = it->Name.c_str();
+				SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr(ssid));
+
+				if (it->Connected)
+					SetItemMark(glob.mHdl, itemCount, checkMark);
+
+				if (sharedData.Status == ConnectRequest ||
+					sharedData.Status == Connecting)
 				{
-					case ScanRequest:
-					case Scanning:
-						SetMenuItemText(glob.mHdl, itemCount, "\pScanning networks...");
-						DisableItem(glob.mHdl, itemCount);
-						break;
-
-					case ConnectRequest:
-					case Connecting:
-						SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr("Connecting to " + sharedData.ConnectSSID + "..."));
-						DisableItem(glob.mHdl, itemCount);
-						break;
-
-					default:
-						SetMenuItemText(glob.mHdl, itemCount, "\pRefresh networks");
-						break;
+					DisableItem(glob.mHdl, itemCount);
 				}
-
-				SetZone(saveZone);
-				sharedData.UpdateUI = false;
 			}
+
+			if (sharedData.Error)
+			{
+				AppendMenu(glob.mHdl, "\p ");
+				itemCount++;
+				SetMenuItemText(glob.mHdl, itemCount, "\pError");
+			}
+
+			if (itemCount > 0)
+			{
+				// Add separator
+				AppendMenu(glob.mHdl, "\p-");
+				itemCount++;
+			}
+
+			AppendMenu(glob.mHdl, "\p ");
+			itemCount++;
+
+			switch (sharedData.Status)
+			{
+				case ScanRequest:
+				case Scanning:
+					SetMenuItemText(glob.mHdl, itemCount, "\pScanning networks...");
+					DisableItem(glob.mHdl, itemCount);
+					break;
+
+				case ConnectRequest:
+				case Connecting:
+					SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr("Connecting to " + sharedData.ConnectSSID + "..."));
+					DisableItem(glob.mHdl, itemCount);
+					break;
+
+				default:
+					SetMenuItemText(glob.mHdl, itemCount, "\pRefresh networks");
+					break;
+			}
+
+			SetZone(saveZone);
+			sharedData.UpdateUI = false;
 		}
 
 		proc = glob.saveMenuSelect;
@@ -304,7 +296,8 @@ extern "C"
 	{
 		short menuID, itemID, iconID;
 		SystemMenuProcPtr proc; 
-
+		Str255 pName;
+		string name;
 
 		menuID = (result & 0xFFFF0000) >> 16;
 		itemID = result & 0x0000FFFF;
@@ -318,14 +311,13 @@ extern "C"
 
 			if (itemID < CountMItems(glob.mHdl))
 			{
-				GetItemIcon(glob.mHdl, itemID, &iconID);
+				GetMenuItemText(glob.mHdl, itemID, pName);
+				name = Util::PtoStr(pName);
 
-				if (iconID == 5)
+				if (name == "Error")
 				{
 					// Error item selected, show error message
-					std::string errMsg = sharedData.ErrorMsg.c_str();
-					ParamText(Util::StrToPStr(errMsg), nil, nil, nil);
-					StopAlert(129, nil);
+					ShowError();
 				}
 				else
 				{
@@ -337,6 +329,7 @@ extern "C"
 			{
 				// The last menu item is the Refresh item
 				sharedData.Status = ScanRequest;
+				sharedData.UpdateUI = true;
 			}
 
 			// I don't think this is vital, but may be helpful for handlers
@@ -357,6 +350,9 @@ extern "C"
 		Handle itemH;
 		Rect box;
 		Str255 ssid, text;
+
+		short curResFile = CurResFile();
+		short homeResFile = FSpOpenResFile(&glob.homeFile, fsRdPerm);
 
 		// Set ssid label in dialog
 		GetMenuItemText(glob.mHdl, itemId, ssid);
@@ -394,6 +390,7 @@ extern "C"
 					sharedData.ConnectSSID = Util::PtoStr(ssid);
 					sharedData.ConnectPwd = Util::PtoStr(text);
 					sharedData.Status = ConnectRequest;
+					sharedData.UpdateUI = true;
 
 					dialogActive = false;
 					break;
@@ -401,5 +398,20 @@ extern "C"
 		}
 
 		DisposeDialog(dialog);
+		CloseResFile(homeResFile);
+		UseResFile(curResFile);
+	}
+
+	void ShowError()
+	{
+		short curResFile = CurResFile();
+		short homeResFile = FSpOpenResFile(&glob.homeFile, fsRdPerm);
+
+		std::string errMsg = sharedData.ErrorMsg.c_str();
+		ParamText(Util::StrToPStr(errMsg), nil, nil, nil);
+		StopAlert(129, nil);
+
+		CloseResFile(homeResFile);
+		UseResFile(curResFile);
 	}
 }

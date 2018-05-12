@@ -45,7 +45,6 @@ extern "C"
 		MenuHandle mHdl;
 		Handle menuIcon;
 		FSSpec homeFile;
-		bool dialogActive;
 	} GlobalsRec;
 
 	// * ******************************************************************************* *
@@ -62,6 +61,7 @@ extern "C"
 	pascal long Patched_MenuSelect(Point where);
 	pascal void Patched_SystemMenu(long result); 
 	void ShowConnectDialog(int itemId);
+	void ShowError();
 }
 
 #endif

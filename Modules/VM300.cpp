@@ -75,9 +75,7 @@ void VM300::GetNetworksResponse(HttpResponse response)
 {
 	if (response.Success)
 	{
-		vector<Network> networks = WifiDataPtr->Networks;
-
-		networks.clear();
+		WifiDataPtr->Networks.clear();
 	
 		stringstream ss;
 		string line;
@@ -94,7 +92,7 @@ void VM300::GetNetworksResponse(HttpResponse response)
 			linestream >> id;	
 		
 			bool exists = false;
-			for (std::vector<Network>::iterator it = networks.begin(); it != networks.end(); ++it)
+			for (std::vector<Network>::iterator it = WifiDataPtr->Networks.begin(); it != WifiDataPtr->Networks.end(); ++it)
 			{
 				if (it->Name == name) 
 				{
@@ -108,7 +106,7 @@ void VM300::GetNetworksResponse(HttpResponse response)
 				Network network;
 				network.Name = name;
 				network.Connected = (name == _currentSsid);
-				networks.push_back(network);
+				WifiDataPtr->Networks.push_back(network);
 			}
 		}
 
