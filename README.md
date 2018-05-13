@@ -23,3 +23,4 @@ The MacWifi extension will be in the MacWifi-build directory as a bin file and d
 ## Credits
 * MacWifi is built using [Retro68](https://github.com/autc04/Retro68).
 * System Menu INIT code based on "SysMenu" shell project by Matt Slot, circa 1995.
+* Password field based on code snippet by Phil Kearney, circa 1994.

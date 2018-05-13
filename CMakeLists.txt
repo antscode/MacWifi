@@ -2,12 +2,11 @@ cmake_minimum_required(VERSION 2.8)
 
 add_executable(MacWifiINIT
 	sysmenu.cpp
-	Prefs.cpp
 	Util.cpp
 	resources.r
 )
 
-target_link_libraries(MacWifiINIT jsoncpp)
+target_link_libraries(MacWifiINIT)
 
 set_target_properties(MacWifiINIT PROPERTIES
     COMPILE_OPTIONS -ffunction-sections # make things smaller
@@ -33,7 +32,6 @@ add_application(MacWifi
 	resources.r
 	Modules/WifiModule.cpp
 	Modules/VM300.cpp
-	Prefs.cpp
 	Comms.cpp
 	Util.cpp
 
@@ -44,7 +42,7 @@ add_application(MacWifi
 	CREATOR "MWFI"
 )
 
-target_link_libraries(MacWifi MacHTTP MacTCPHelper jsoncpp)
+target_link_libraries(MacWifi MacHTTP MacTCPHelper)
 
 # again, add some options to make things smaller.
 set_target_properties(MacWifi PROPERTIES COMPILE_OPTIONS -ffunction-sections)

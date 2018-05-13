@@ -60,8 +60,10 @@ extern "C"
 	pascal void Patched_DrawMenuBar(void);
 	pascal long Patched_MenuSelect(Point where);
 	pascal void Patched_SystemMenu(long result); 
+	pascal Boolean PSWDModalFilter(DialogPtr theDialog, EventRecord *theEvent, short *itemHit);
 	void ShowConnectDialog(int itemId);
 	void ShowError();
+	void PasswordKey(TEHandle teHndl, char theKey);
 }
 
 #endif

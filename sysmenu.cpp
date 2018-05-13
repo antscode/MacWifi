@@ -1,6 +1,7 @@
 /*
 	Copyright 2018 Anthony Super.
 	System Menu INIT code based on "SysMenu" shell project by Matt Slot, circa 1995.
+	Password field based on code snippet by Phil Kearney, circa 1994.
 */
 
 #include <Gestalt.h>
@@ -12,7 +13,6 @@
 #include <string.h>
 
 #include "sysmenu.h"
-#include "Prefs.h"
 #include "Util.h"
 #include "WifiShared.h"
 
@@ -22,6 +22,7 @@ extern "C"
 
 	GlobalsRec glob;
 	WifiData sharedData;
+	Str255 _password = "\p";
 
 	void _start()
 	{
@@ -239,8 +240,7 @@ extern "C"
 				if (it->Connected)
 					SetItemMark(glob.mHdl, itemCount, checkMark);
 
-				if (sharedData.Status == ConnectRequest ||
-					sharedData.Status == Connecting)
+				if (sharedData.Status != Idle)
 				{
 					DisableItem(glob.mHdl, itemCount);
 				}
@@ -353,6 +353,7 @@ extern "C"
 
 		short curResFile = CurResFile();
 		short homeResFile = FSpOpenResFile(&glob.homeFile, fsRdPerm);
+		_password[0] = 0;
 
 		// Set ssid label in dialog
 		GetMenuItemText(glob.mHdl, itemId, ssid);
@@ -361,38 +362,41 @@ extern "C"
 		DialogPtr dialog = GetNewDialog(128, 0, (WindowPtr)-1);
 		MacSetPort(dialog);
 
-		Util::FrameDefaultButton(dialog, 8, false);
+		Util::FrameDefaultButton(dialog, 7, false);
 
-		ControlHandle cb;
-		GetDialogItem(dialog, 6, &type, &itemH, &box);
-		cb = (ControlHandle)itemH;
-		SetControlValue(cb, 1);
+		ControlHandle showPassword;
+		GetDialogItem(dialog, 5, &type, &itemH, &box);
+		showPassword = (ControlHandle)itemH;
+
+		ModalFilterUPP pwdFilterProc = NewModalFilterProc(PSWDModalFilter);
 
 		short item;
 		bool dialogActive = true;
 
 		while (dialogActive)
 		{
-			ModalDialog(NULL, &item);
-
-			// Set enabled state of Join button based on password length
-			GetDialogItem(dialog, 4, &type, &itemH, &box);
-			GetDialogItemText(itemH, text);
-			Util::FrameDefaultButton(dialog, 8, (text[0] > 0));
+			ModalDialog(pwdFilterProc, &item);
 
 			switch (item)
 			{
-				case 7:
+				case 5:
+					SetControlValue(showPassword, !GetControlValue(showPassword));
+					break;
+
+				case 6:
 					dialogActive = false;
 					break;
 
-				case 8:
-					sharedData.ConnectSSID = Util::PtoStr(ssid);
-					sharedData.ConnectPwd = Util::PtoStr(text);
-					sharedData.Status = ConnectRequest;
-					sharedData.UpdateUI = true;
+				case 7:
+					if (_password[0] > 0)
+					{
+						sharedData.ConnectSSID = Util::PtoStr(ssid);
+						sharedData.ConnectPwd = Util::PtoStr(_password);
+						sharedData.Status = ConnectRequest;
+						sharedData.UpdateUI = true;
 
-					dialogActive = false;
+						dialogActive = false;
+					}
 					break;
 			}
 		}
@@ -413,5 +417,102 @@ extern "C"
 
 		CloseResFile(homeResFile);
 		UseResFile(curResFile);
+	}
+
+	pascal Boolean PSWDModalFilter(DialogPtr theDialog, EventRecord *theEvent, short *itemHit)
+	{
+		char key;
+		ModalFilterProcPtr theModalProc;
+
+		if (theEvent->what == keyDown) {
+
+			key = (char)(theEvent->message & charCodeMask);
+
+			switch (key) 
+			{
+				case kEnterCharCode:
+				case kReturnCharCode:
+					*itemHit = 7;
+					return true;
+
+				case kEscapeCharCode:  
+					*itemHit = 6;
+					return true;
+			
+				default:
+					PasswordKey(((DialogPeek)theDialog)->textH, key);
+					theEvent->what = 0;
+					*itemHit = 0;
+
+					// Set enabled state of Join button based on password length
+					Util::FrameDefaultButton(theDialog, 7, (_password[0] > 0));
+					return false;
+			}
+		}
+
+		GetStdFilterProc(&theModalProc);
+		return (theModalProc(theDialog, theEvent, itemHit));
+	}
+
+	void PasswordKey(TEHandle teHndl, char theKey)
+	{
+		short start, end, len;
+		Rect hiddenRect;
+		Handle txtHndl;
+		TEHandle tmpTE;
+		Str255 tmpStr;
+		GrafPtr currPort;
+
+		GetPort(&currPort);
+
+		// Create a temporary TERec offscreen
+		hiddenRect = (**teHndl).viewRect;
+		OffsetRect(&hiddenRect, currPort->portRect.right + 5, currPort->portRect.bottom + 5);
+		tmpTE = TENew(&hiddenRect, &hiddenRect);
+
+		if (!tmpTE)
+			return;
+
+		// Set the current password into the hidden TERec
+		TESetText(&_password[1], _password[0], tmpTE);
+
+		// Set the selection range of our hidden TERec to that
+		// of the visible password TERec
+		TESetSelect((**teHndl).selStart, (**teHndl).selEnd, tmpTE);
+
+		// Process the key in the hidden TERec
+		TEKey(theKey, tmpTE);
+
+		// Grab the new password out of the hidden TERec
+		_password[0] = (**tmpTE).teLength;
+		BlockMove(*((**tmpTE).hText), &_password[1], _password[0]);
+
+		// Create a string of bullets to match the real password
+		tmpStr[0] = _password[0];
+		for (len = 1; len <= tmpStr[0]; len++)
+			tmpStr[len] = '¥';
+
+		// Deactivate the visible TERec so no phantom cursors pop up.
+		TEDeactivate(teHndl);
+
+		// Dump the bullets into the visible TERec
+		TESetText(&tmpStr[1], tmpStr[0], teHndl);
+
+		// Set the selection to match that of the hidden TERec
+		TESetSelect((**tmpTE).selStart, (**tmpTE).selEnd, teHndl);
+
+		// Dispose of the hidden TERec
+		TEDispose(tmpTE);
+
+		// We need to call InvalRect if the visible TEField is empty because
+		// of some wierdness I didn't bother to figure out with TextEdit.
+		// In all other cases, we just need to update the visible TERec.
+		if (!tmpStr[0])
+			InvalRect(&((**teHndl).viewRect));
+		else
+			TEUpdate(&((**teHndl).viewRect), teHndl);
+
+		// Turn the visible TERec back on.
+		TEActivate(teHndl);
 	}
 }

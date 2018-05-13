@@ -81,9 +81,6 @@ resource 'DITL' (128, purgeable) {
 		{ 79, 157, 97, 350 },
 		CheckBox { enabled, "Show password" };
 
-		{ 99, 157, 117, 350 },
-		CheckBox { enabled, "Remember this network" };
-
 		{ 134, 224, 154, 291 },
 		Button { enabled, "Cancel" };
 
