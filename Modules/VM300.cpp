@@ -1,5 +1,7 @@
 #include <string>
 #include <sstream> 
+#include <Timer.h>
+#include <Threads.h>
 #include "VM300.h"
 
 void VM300::Login(std::function<void()> onComplete)
@@ -198,33 +200,28 @@ void VM300::RestartResponse(HttpResponse response)
 {
 	if (response.Success)
 	{
-		// Start polling for module to come back up
-		RestartCompleteRequest();
-	}
-	else
-	{
-		DoError("Restart: " + response.ErrorMsg);
-	}
-}
+		// Reboot takes about 60 secs - lets wait 90
+		const double waitTime = (90 * 1000000);
+		UnsignedWide startTime, curTime, diff;
+		double timeDiff;
 
-void VM300::RestartCompleteRequest()
-{
-	Comms::Http.Get(
-		_baseUri + "/a.asp",
-		std::bind(&VM300::RestartCompleteResponse, this, _1));
-}
+		Microseconds(&startTime);
 
-void VM300::RestartCompleteResponse(HttpResponse response)
-{
-	if (response.Success)
-	{
-		// Restart complete, refresh networks
+		do
+		{
+			Microseconds(&curTime);
+			timeDiff = Util::MicrosecondToDouble(&curTime) - Util::MicrosecondToDouble(&startTime);
+			YieldToAnyThread();
+		} while (timeDiff < waitTime);
+
+		// Refresh networks
+		WifiDataPtr->Status = Scanning;
+		WifiDataPtr->UpdateUI = true;
 		GetNetworks();
 	}
 	else
 	{
-		// Module not available, so try again
-		RestartCompleteRequest(); // TODO: Max tries would be wise
+		DoError("Restart: " + response.ErrorMsg);
 	}
 }
 

@@ -13,4 +13,5 @@ class Util
 		static void Debug(string msg);
 		static void FrameDefaultButton(DialogPtr dialog, short itemNo, bool active);
 		static string UrlEncode(string &value);
+		static double MicrosecondToDouble(register const UnsignedWide *epochPtr);
 };

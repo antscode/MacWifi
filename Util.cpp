@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include "Util.h"
 
+#define kTwoPower32 (4294967296.0)      /* 2^32 */
+
 char* Util::PtoCStr(unsigned char *s)
 {
 	int theLen;
@@ -128,4 +130,13 @@ string Util::UrlEncode(string &value)
 	}
 
 	return escaped.str();
+}
+
+// From: http://www.mactech.com/articles/develop/issue_26/minow.html
+double Util::MicrosecondToDouble(register const UnsignedWide *epochPtr)
+{
+	register double result;
+
+	result = (((double)epochPtr->hi) * kTwoPower32) + epochPtr->lo;
+	return (result);
 }

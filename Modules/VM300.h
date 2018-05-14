@@ -39,9 +39,6 @@ class VM300 : public WifiModule
 		void RestartRequest();
 		void RestartResponse(HttpResponse response);
 
-		void RestartCompleteRequest();
-		void RestartCompleteResponse(HttpResponse response);
-
 		string GetWifiModeStr(WifiMode mode);
 		string GetEncryptionStr(WifiEncryption encryption);
 };
