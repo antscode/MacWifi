@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 add_executable(MacWifiINIT
 	sysmenu.cpp
 	Util.cpp
+	ShowInitIcon.c
 	resources.r
 )
 

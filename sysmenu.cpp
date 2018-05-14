@@ -15,6 +15,7 @@
 #include "sysmenu.h"
 #include "Util.h"
 #include "WifiShared.h"
+#include "ShowInitIcon.h"
 
 extern "C"
 {
@@ -23,10 +24,13 @@ extern "C"
 	GlobalsRec glob;
 	WifiData sharedData;
 	Str255 _password = "\p";
+	bool _showPassword;
 
 	void _start()
 	{
 		RETRO68_RELOCATE();
+
+		ShowInitIcon(128, true);
 
 		Handle myHandle;
 
@@ -350,6 +354,7 @@ extern "C"
 		Handle itemH;
 		Rect box;
 		Str255 ssid, text;
+		ControlHandle pwdCtrl;
 
 		short curResFile = CurResFile();
 		short homeResFile = FSpOpenResFile(&glob.homeFile, fsRdPerm);
@@ -364,9 +369,9 @@ extern "C"
 
 		Util::FrameDefaultButton(dialog, 7, false);
 
-		ControlHandle showPassword;
 		GetDialogItem(dialog, 5, &type, &itemH, &box);
-		showPassword = (ControlHandle)itemH;
+		pwdCtrl = (ControlHandle)itemH;
+		_showPassword = GetControlValue(pwdCtrl);
 
 		ModalFilterUPP pwdFilterProc = NewModalFilterProc(PSWDModalFilter);
 
@@ -380,7 +385,9 @@ extern "C"
 			switch (item)
 			{
 				case 5:
-					SetControlValue(showPassword, !GetControlValue(showPassword));
+					_showPassword = !GetControlValue(pwdCtrl);
+					SetControlValue(pwdCtrl, _showPassword);
+					PasswordKey(((DialogPeek)dialog)->textH, 0);
 					break;
 
 				case 6:
@@ -481,7 +488,8 @@ extern "C"
 		TESetSelect((**teHndl).selStart, (**teHndl).selEnd, tmpTE);
 
 		// Process the key in the hidden TERec
-		TEKey(theKey, tmpTE);
+		if(theKey > 0)
+			TEKey(theKey, tmpTE);
 
 		// Grab the new password out of the hidden TERec
 		_password[0] = (**tmpTE).teLength;
@@ -490,7 +498,7 @@ extern "C"
 		// Create a string of bullets to match the real password
 		tmpStr[0] = _password[0];
 		for (len = 1; len <= tmpStr[0]; len++)
-			tmpStr[len] = '¥';
+			tmpStr[len] =  _showPassword ? _password[len] :'¥';
 
 		// Deactivate the visible TERec so no phantom cursors pop up.
 		TEDeactivate(teHndl);
