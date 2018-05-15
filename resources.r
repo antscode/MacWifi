@@ -18,7 +18,7 @@ resource 'FREF' (128, purgeable) {
 
 type 'MWFI' as 'STR ';
 resource 'MWFI' (0, purgeable) {
-   "MacWifi Extension 1.0"
+   "1.0, 2018 Anthony Super."
 };
 
 resource 'BNDL' (128, purgeable) {
@@ -50,7 +50,7 @@ resource 'SIZE' (-1) {
 };
 
 resource 'DLOG' (128, purgeable) {
-	{ 0, 0, 169, 377 },
+	{ 0, 0, 149, 377 },
 	dBoxProc,
 	visible,
 	goAway,
@@ -81,10 +81,10 @@ resource 'DITL' (128, purgeable) {
 		{ 79, 157, 97, 350 },
 		CheckBox { enabled, "Show password" };
 
-		{ 134, 224, 154, 291 },
+		{ 114, 224, 134, 291 },
 		Button { enabled, "Cancel" };
 
-		{ 134, 306, 154, 362 },
+		{ 114, 306, 134, 362 },
 		Button { enabled, "Join" };
 	}
 };
