@@ -11,16 +11,6 @@
 using namespace std;
 using namespace std::placeholders;
 
-enum WifiMode
-{
-	WPA2PSK
-};
-
-enum WifiEncryption
-{
-	AES
-};
-
 class WifiModule
 {
 	public:

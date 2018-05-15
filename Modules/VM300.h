@@ -40,7 +40,10 @@ class VM300 : public WifiModule
 		void RestartResponse(HttpResponse response);
 
 		string GetWifiModeStr(WifiMode mode);
+		WifiMode GetWifiMode(string mode);
+
 		string GetEncryptionStr(WifiEncryption encryption);
+		WifiEncryption GetEncryption(string encryption);
 };
 
 #endif // _VM300_

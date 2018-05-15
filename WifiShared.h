@@ -15,10 +15,26 @@ enum WifiStatus
 	Connecting
 };
 
+enum WifiMode
+{
+	WPA2,
+	WPA,
+	Open
+};
+
+enum WifiEncryption
+{
+	AES,
+	TKIP,
+	None
+};
+
 struct Network
 {
 	public:
 		string Name;
+		WifiMode Mode;
+		WifiEncryption Encryption;
 		bool Connected;
 };
 
@@ -32,6 +48,8 @@ class WifiData
 		vector<Network> Networks;
 		string ConnectSSID;
 		string ConnectPwd;
+		WifiMode ConnectMode;
+		WifiEncryption ConnectEncryption;
 };
 
 typedef int MemLoc;

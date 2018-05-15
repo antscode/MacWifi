@@ -38,7 +38,11 @@ int main()
 				case ConnectRequest:
 					_sharedDataPtr->Status = Connecting;
 					_sharedDataPtr->Error = false;
-					_wifiModule.Connect(_sharedDataPtr->ConnectSSID, WPA2PSK, AES, _sharedDataPtr->ConnectPwd);
+					_wifiModule.Connect(
+						_sharedDataPtr->ConnectSSID, 
+						_sharedDataPtr->ConnectMode, 
+						_sharedDataPtr->ConnectEncryption, 
+						_sharedDataPtr->ConnectPwd);
 					break;
 			}
 

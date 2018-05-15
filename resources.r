@@ -70,7 +70,7 @@ resource 'DITL' (128, purgeable) {
 		Icon { enabled, 262 };
 
 		{ 12, 80, 46, 350 },
-		StaticText { enabled, "The wifi network \"^0\" requires a WPA2 password." };
+		StaticText { enabled, "The wifi network \"^0\" requires a ^1 password." };
 
 		{ 60, 80, 80, 160 },
 		StaticText { enabled, "Password:" };

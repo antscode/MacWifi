@@ -14,7 +14,6 @@
 
 #include "sysmenu.h"
 #include "Util.h"
-#include "WifiShared.h"
 #include "ShowInitIcon.h"
 
 extern "C"
@@ -326,7 +325,22 @@ extern "C"
 				else
 				{
 					// Network selected
-					ShowConnectDialog(itemID);
+					Network& network = sharedData.Networks.at(itemID - 1);
+
+					if (network.Mode == Open)
+					{
+						// Open network, so initiate connect request immediately
+						sharedData.ConnectSSID = network.Name;
+						sharedData.ConnectPwd = "";
+						sharedData.ConnectMode = network.Mode;
+						sharedData.ConnectEncryption = network.Encryption;
+						sharedData.Status = ConnectRequest;
+						sharedData.UpdateUI = true;
+					}
+					else
+					{
+						ShowConnectDialog(network);
+					}
 				}
 			}
 			else
@@ -348,12 +362,11 @@ extern "C"
 			(*proc) (result);
 	}
 
-	void ShowConnectDialog(int itemId)
+	void ShowConnectDialog(Network& network)
 	{
 		DialogItemType type;
 		Handle itemH;
 		Rect box;
-		Str255 ssid, text;
 		ControlHandle pwdCtrl;
 
 		short curResFile = CurResFile();
@@ -361,8 +374,8 @@ extern "C"
 		_password[0] = 0;
 
 		// Set ssid label in dialog
-		GetMenuItemText(glob.mHdl, itemId, ssid);
-		ParamText(ssid, nil, nil, nil);
+		std::string ssid = network.Name.c_str();
+		ParamText(Util::StrToPStr(ssid), Util::StrToPStr(GetWifiModeLabel(network.Mode)), nil, nil);
 
 		DialogPtr dialog = GetNewDialog(128, 0, (WindowPtr)-1);
 		MacSetPort(dialog);
@@ -397,8 +410,10 @@ extern "C"
 				case 7:
 					if (_password[0] > 0)
 					{
-						sharedData.ConnectSSID = Util::PtoStr(ssid);
+						sharedData.ConnectSSID = network.Name;
 						sharedData.ConnectPwd = Util::PtoStr(_password);
+						sharedData.ConnectMode = network.Mode;
+						sharedData.ConnectEncryption = network.Encryption;
 						sharedData.Status = ConnectRequest;
 						sharedData.UpdateUI = true;
 
@@ -522,5 +537,18 @@ extern "C"
 
 		// Turn the visible TERec back on.
 		TEActivate(teHndl);
+	}
+
+	string GetWifiModeLabel(WifiMode mode)
+	{
+		switch (mode)
+		{
+			case WPA2:
+				return "WPA2";
+			case WPA:
+				return "WPA";
+			default:
+				return "";
+		}
 	}
 }

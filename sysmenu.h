@@ -4,9 +4,13 @@
 */
 
 #include <Menus.h>
+#include <string>
+#include "WifiShared.h"
 
 #ifndef ____SYSMENU_HEADER____
 #define ____SYSMENU_HEADER____
+
+using namespace std;
 
 extern "C"
 {
@@ -61,9 +65,10 @@ extern "C"
 	pascal long Patched_MenuSelect(Point where);
 	pascal void Patched_SystemMenu(long result); 
 	pascal Boolean PSWDModalFilter(DialogPtr theDialog, EventRecord *theEvent, short *itemHit);
-	void ShowConnectDialog(int itemId);
+	void ShowConnectDialog(Network& network);
 	void ShowError();
 	void PasswordKey(TEHandle teHndl, char theKey);
+	string GetWifiModeLabel(WifiMode mode);
 }
 
 #endif

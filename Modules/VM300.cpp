@@ -87,11 +87,14 @@ void VM300::GetNetworksResponse(HttpResponse response)
 		while (std::getline(ss, line))
 		{
 			stringstream linestream(line);
-			string name;
-			string id;
+			string name, temp, enc, mode;
 
 			std::getline(linestream, name, '\t'); 
-			linestream >> id;	
+			linestream >> temp; // Column 2 = ID
+			linestream >> temp; // Column 3 = Channel
+			linestream >> temp; // Column 4 = Strength
+			linestream >> enc;  // Column 5 = Encryption
+			linestream >> mode; // Column 6 = Mode
 		
 			bool exists = false;
 			for (std::vector<Network>::iterator it = WifiDataPtr->Networks.begin(); it != WifiDataPtr->Networks.end(); ++it)
@@ -107,6 +110,8 @@ void VM300::GetNetworksResponse(HttpResponse response)
 			{
 				Network network;
 				network.Name = name;
+				network.Encryption = GetEncryption(enc);
+				network.Mode = GetWifiMode(mode);
 				network.Connected = (name == _currentSsid);
 				WifiDataPtr->Networks.push_back(network);
 			}
@@ -200,8 +205,8 @@ void VM300::RestartResponse(HttpResponse response)
 {
 	if (response.Success)
 	{
-		// Reboot takes about 60 secs - lets wait 90
-		const double waitTime = (90 * 1000000);
+		// Reboot takes about 60 secs - lets wait 80
+		const double waitTime = (80 * 1000000);
 		UnsignedWide startTime, curTime, diff;
 		double timeDiff;
 
@@ -229,12 +234,26 @@ string VM300::GetWifiModeStr(WifiMode mode)
 {
 	switch (mode)
 	{
-		case WPA2PSK:
+		case WPA2:
 			return "WPA2PSK";
 
+		case WPA:
+			return "WPAPSKWPA2PSK";
+
 		default:
-			return "";
+			return "OPEN";
 	}
+}
+
+WifiMode VM300::GetWifiMode(string mode)
+{
+	if (mode == "WPA2-PSK")
+		return WPA2;
+
+	if (mode == "WPAPSK-WPA2PSK")
+		return WPA;
+
+	return Open;
 }
 
 string VM300::GetEncryptionStr(WifiEncryption encryption) 
@@ -244,7 +263,21 @@ string VM300::GetEncryptionStr(WifiEncryption encryption)
 		case AES:
 			return "AES";
 
+		case TKIP:
+			return "TKIPAES";
+
 		default:
-			return "";
+			return "NONE";
 	}
+}
+
+WifiEncryption VM300::GetEncryption(string encryption)
+{
+	if(encryption == "AES")
+		return AES;
+
+	if (encryption == "TKIPAES")
+		return TKIP;
+
+	return None;
 }
