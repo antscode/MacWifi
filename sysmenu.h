@@ -24,15 +24,15 @@ extern "C"
 	// When we install the Menu, we will try to get this MenuID. If 
 	// there is already one (2 copies of INIT?), we will do our best
 	// to get another (but close) ID. (See InsertMenu patch)
-#define kPrefMenuID		-19999
+	#define kPrefMenuID		-19999
 
-// This is an icon family for the menu. Currently the value is set
-// to something guaranteed to be available (from the system file).
-// You can set it to an icon from your resfile or to 0 for no icon.
-#define kPrefIconID		129
+	// This is an icon family for the menu. Currently the value is set
+	// to something guaranteed to be available (from the system file).
+	// You can set it to an icon from your resfile or to 0 for no icon.
+	#define kPrefIconID		129
 
-// * ******************************************************************************* *
-// * ******************************************************************************* *
+	// * ******************************************************************************* *
+	// * ******************************************************************************* *
 
 	typedef pascal void(*InsertMenuProcPtr) (MenuHandle mHdl, short beforeID);
 	typedef pascal void(*DrawMenuProcPtr) ();
@@ -69,6 +69,7 @@ extern "C"
 	void ShowError();
 	void PasswordKey(TEHandle teHndl, char theKey);
 	string GetWifiModeLabel(WifiMode mode);
+	void Restart();
 }
 
 #endif

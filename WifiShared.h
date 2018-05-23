@@ -12,7 +12,8 @@ enum WifiStatus
 	ScanRequest,
 	Scanning,
 	ConnectRequest,
-	Connecting
+	Connecting,
+	RestartRequired
 };
 
 enum WifiMode
@@ -44,10 +45,10 @@ class WifiData
 		WifiStatus Status;
 		bool UpdateUI;
 		bool Error;
-		string ErrorMsg;
+		char ErrorMsg[255];
 		vector<Network> Networks;
-		string ConnectSSID;
-		string ConnectPwd;
+		char ConnectSSID[255];
+		char ConnectPwd[255];
 		WifiMode ConnectMode;
 		WifiEncryption ConnectEncryption;
 };

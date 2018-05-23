@@ -4,7 +4,7 @@
 #include "WifiShared.h"
 #include "MacWifi.h"
 
-WifiData* _sharedDataPtr;
+WifiData* _sharedDataPtr = 0;
 VM300 _wifiModule;
 
 int main()
@@ -27,26 +27,33 @@ int main()
 		}
 		else
 		{
-			switch (_sharedDataPtr->Status)
+			if (_sharedDataPtr == 0)
 			{
-				case ScanRequest:
-					_sharedDataPtr->Status = Scanning;
-					_sharedDataPtr->Error = false;
-					_wifiModule.GetNetworks();
-					break;
-
-				case ConnectRequest:
-					_sharedDataPtr->Status = Connecting;
-					_sharedDataPtr->Error = false;
-					_wifiModule.Connect(
-						_sharedDataPtr->ConnectSSID, 
-						_sharedDataPtr->ConnectMode, 
-						_sharedDataPtr->ConnectEncryption, 
-						_sharedDataPtr->ConnectPwd);
-					break;
+				GetSharedData();
 			}
+			else
+			{
+				switch (_sharedDataPtr->Status)
+				{
+					case ScanRequest:
+						_sharedDataPtr->Status = Scanning;
+						_sharedDataPtr->Error = false;
+						_wifiModule.GetNetworks();
+						break;
 
-			Comms::Http.ProcessRequests();
+					case ConnectRequest:
+						_sharedDataPtr->Status = Connecting;
+						_sharedDataPtr->Error = false;
+						_wifiModule.Connect(
+							std::string(_sharedDataPtr->ConnectSSID),
+							_sharedDataPtr->ConnectMode,
+							_sharedDataPtr->ConnectEncryption,
+							std::string(_sharedDataPtr->ConnectPwd));
+						break;
+				}
+
+				Comms::Http.ProcessRequests();
+			}
 		}
 	}
 }
@@ -54,8 +61,16 @@ int main()
 void GetSharedData()
 {
 	MemLocHandle memHandle = (MemLocHandle)Get1Resource('memr', 128);
-	_sharedDataPtr = (WifiData*)**memHandle;
-	_wifiModule.WifiDataPtr = _sharedDataPtr;
+
+	if (ResError() != resNotFound)
+	{
+		_sharedDataPtr = (WifiData*)**memHandle;
+		_wifiModule.WifiDataPtr = _sharedDataPtr;
+
+		RemoveResource((Handle)memHandle);
+		UpdateResFile(CurResFile());
+		ReleaseResource((Handle)memHandle);
+	}
 }
 
 void EventInit()

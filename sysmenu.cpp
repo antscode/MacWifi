@@ -276,8 +276,12 @@ extern "C"
 
 				case ConnectRequest:
 				case Connecting:
-					SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr("Connecting to " + sharedData.ConnectSSID + "..."));
+					SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr("Connecting to " + std::string(sharedData.ConnectSSID) + "..."));
 					DisableItem(glob.mHdl, itemCount);
+					break;
+
+				case RestartRequired:
+					SetMenuItemText(glob.mHdl, itemCount, "\pRestart required");
 					break;
 
 				default:
@@ -312,43 +316,46 @@ extern "C"
 			// Some apps aren't careful about giving us the arrow.
 			InitCursor();
 
-			if (itemID < CountMItems(glob.mHdl))
+			GetMenuItemText(glob.mHdl, itemID, pName);
+			name = Util::PtoStr(pName);
+
+			if (name == "Error")
 			{
-				GetMenuItemText(glob.mHdl, itemID, pName);
-				name = Util::PtoStr(pName);
-
-				if (name == "Error")
-				{
-					// Error item selected, show error message
-					ShowError();
-				}
-				else
-				{
-					// Network selected
-					Network& network = sharedData.Networks.at(itemID - 1);
-
-					if (network.Mode == Open)
-					{
-						// Open network, so initiate connect request immediately
-						sharedData.ConnectSSID = network.Name;
-						sharedData.ConnectPwd = "";
-						sharedData.ConnectMode = network.Mode;
-						sharedData.ConnectEncryption = network.Encryption;
-						sharedData.Status = ConnectRequest;
-						sharedData.UpdateUI = true;
-					}
-					else
-					{
-						ShowConnectDialog(network);
-					}
-				}
+				// Error item selected, show error message
+				ShowError();
 			}
-			else
+			else if (name == "Refresh networks")
 			{
-				// The last menu item is the Refresh item
 				sharedData.Status = ScanRequest;
 				sharedData.UpdateUI = true;
 			}
+			else if (name == "Restart required")
+			{
+				Restart();
+			}
+			else
+			{
+				// Network selected
+				Network& network = sharedData.Networks.at(itemID - 1);
+
+				if (network.Mode == Open)
+				{
+					// Open network, so initiate connect request immediately
+					memset(&sharedData.ConnectSSID, 0, sizeof(sharedData.ConnectSSID));
+					memset(&sharedData.ConnectPwd, 0, sizeof(sharedData.ConnectPwd));
+
+					strcpy(sharedData.ConnectSSID, network.Name.c_str());
+					sharedData.ConnectMode = network.Mode;
+					sharedData.ConnectEncryption = network.Encryption;
+					sharedData.Status = ConnectRequest;
+					sharedData.UpdateUI = true;
+				}
+				else
+				{
+					ShowConnectDialog(network);
+				}
+			}
+
 
 			// I don't think this is vital, but may be helpful for handlers
 			// that go into a GNE loop (such as Alert() or ModalDialog())
@@ -410,8 +417,11 @@ extern "C"
 				case 7:
 					if (_password[0] > 0)
 					{
-						sharedData.ConnectSSID = network.Name;
-						sharedData.ConnectPwd = Util::PtoStr(_password);
+						memset(&sharedData.ConnectSSID, 0, sizeof(sharedData.ConnectSSID));
+						memset(&sharedData.ConnectPwd, 0, sizeof(sharedData.ConnectPwd));
+						strcpy(sharedData.ConnectSSID, network.Name.c_str());
+						strcpy(sharedData.ConnectPwd, Util::PtoStr(_password).c_str());
+
 						sharedData.ConnectMode = network.Mode;
 						sharedData.ConnectEncryption = network.Encryption;
 						sharedData.Status = ConnectRequest;
@@ -433,7 +443,7 @@ extern "C"
 		short curResFile = CurResFile();
 		short homeResFile = FSpOpenResFile(&glob.homeFile, fsRdPerm);
 
-		std::string errMsg = sharedData.ErrorMsg.c_str();
+		std::string errMsg = sharedData.ErrorMsg;
 		ParamText(Util::StrToPStr(errMsg), nil, nil, nil);
 		StopAlert(129, nil);
 
@@ -550,5 +560,17 @@ extern "C"
 			default:
 				return "";
 		}
+	}
+
+	void Restart()
+	{
+		OSType appSig = 'FNDR';
+		AEAddressDesc finderAddr;
+		AppleEvent shutDown;
+		AppleEvent reply;
+
+		AECreateDesc(typeApplSignature, (Ptr)(&appSig), (Size)sizeof(appSig), &finderAddr);
+		AECreateAppleEvent(kAEFinderEvents, kAERestart, &finderAddr, kAutoGenerateReturnID, kAnyTransactionID, &shutDown);
+		AESend(&shutDown, &reply, kAENoReply + kAECanSwitchLayer + kAEAlwaysInteract, kAENormalPriority, kAEDefaultTimeout, nil, nil);
 	}
 }

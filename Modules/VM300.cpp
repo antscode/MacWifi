@@ -219,10 +219,9 @@ void VM300::RestartResponse(HttpResponse response)
 			YieldToAnyThread();
 		} while (timeDiff < waitTime);
 
-		// Refresh networks
-		WifiDataPtr->Status = Scanning;
+		// Flag restart required for the Mac to get its new IP
+		WifiDataPtr->Status = RestartRequired;
 		WifiDataPtr->UpdateUI = true;
-		GetNetworks();
 	}
 	else
 	{
