@@ -13,7 +13,9 @@ enum WifiStatus
 	Scanning,
 	ConnectRequest,
 	Connecting,
-	RestartRequired
+	RestartRequired,
+	RestartRequest,
+	Restarting
 };
 
 enum WifiMode

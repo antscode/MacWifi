@@ -98,7 +98,7 @@ resource 'ALRT' (129, purgeable ) {
       OK, visible, silent,
       OK, visible, silent
    },
-   centerMainScreen
+   alertPositionMainScreen
 };
 
 resource 'DITL' (129, purgeable) {

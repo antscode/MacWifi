@@ -9,5 +9,5 @@ bool _run = true;
 int main();
 void GetSharedData();
 void EventInit();
+void Restart();
 pascal OSErr Quit(AppleEvent* appleEvent, AppleEvent* reply, long refCon);
-pascal OSErr ConnectNetwork(AppleEvent* appleEvent, AppleEvent* reply, long refCon);

@@ -69,7 +69,6 @@ extern "C"
 	void ShowError();
 	void PasswordKey(TEHandle teHndl, char theKey);
 	string GetWifiModeLabel(WifiMode mode);
-	void Restart();
 }
 
 #endif

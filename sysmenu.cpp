@@ -284,6 +284,12 @@ extern "C"
 					SetMenuItemText(glob.mHdl, itemCount, "\pRestart required");
 					break;
 
+				case RestartRequest:
+				case Restarting:
+					SetMenuItemText(glob.mHdl, itemCount, "\pRestarting...");
+					DisableItem(glob.mHdl, itemCount);
+					break;
+
 				default:
 					SetMenuItemText(glob.mHdl, itemCount, "\pRefresh networks");
 					break;
@@ -331,7 +337,8 @@ extern "C"
 			}
 			else if (name == "Restart required")
 			{
-				Restart();
+				sharedData.Status = RestartRequest;
+				sharedData.UpdateUI = true;
 			}
 			else
 			{
@@ -560,17 +567,5 @@ extern "C"
 			default:
 				return "";
 		}
-	}
-
-	void Restart()
-	{
-		OSType appSig = 'FNDR';
-		AEAddressDesc finderAddr;
-		AppleEvent shutDown;
-		AppleEvent reply;
-
-		AECreateDesc(typeApplSignature, (Ptr)(&appSig), (Size)sizeof(appSig), &finderAddr);
-		AECreateAppleEvent(kAEFinderEvents, kAERestart, &finderAddr, kAutoGenerateReturnID, kAnyTransactionID, &shutDown);
-		AESend(&shutDown, &reply, kAENoReply + kAECanSwitchLayer + kAEAlwaysInteract, kAENormalPriority, kAEDefaultTimeout, nil, nil);
 	}
 }
