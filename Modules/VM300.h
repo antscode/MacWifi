@@ -9,7 +9,7 @@ class VM300 : public WifiModule
 {
 	public:
 		virtual void GetNetworks();
-		virtual void Connect(string ssid, WifiMode mode, WifiEncryption encryption, string pwd);
+		virtual void Connect(string name, string id, WifiMode mode, WifiEncryption encryption, string pwd);
 		
 	private:
 		const string _baseUri = "http://vonets.cfg";

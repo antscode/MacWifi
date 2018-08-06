@@ -1,6 +1,9 @@
 #include <string> 
 #include <Dialogs.h>
 
+#ifndef _UTIL_
+#define _UTIL_
+
 using namespace std;
 
 class Util
@@ -15,3 +18,5 @@ class Util
 		static string UrlEncode(string &value);
 		static double MicrosecondToDouble(register const UnsignedWide *epochPtr);
 };
+
+#endif // _UTIL_

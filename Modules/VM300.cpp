@@ -126,9 +126,9 @@ void VM300::GetNetworksResponse(HttpResponse response)
 	}
 }
 
-void VM300::Connect(string ssid, WifiMode mode, WifiEncryption encryption, string pwd)
+void VM300::Connect(string name, string id, WifiMode mode, WifiEncryption encryption, string pwd)
 {
-	_ssid = ssid;
+	_ssid = name;
 	_mode = mode;
 	_encryption = encryption;
 	_pwd = pwd;

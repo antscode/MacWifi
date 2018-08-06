@@ -5,7 +5,7 @@
 #include "MacWifi.h"
 
 WifiData* _sharedDataPtr = 0;
-VM300 _wifiModule;
+OpenWRT _wifiModule; // VM300 _wifiModule;
 
 int main()
 {	
@@ -45,7 +45,8 @@ int main()
 						_sharedDataPtr->Status = Connecting;
 						_sharedDataPtr->Error = false;
 						_wifiModule.Connect(
-							std::string(_sharedDataPtr->ConnectSSID),
+							std::string(_sharedDataPtr->ConnectName),
+							std::string(_sharedDataPtr->ConnectId),
 							_sharedDataPtr->ConnectMode,
 							_sharedDataPtr->ConnectEncryption,
 							std::string(_sharedDataPtr->ConnectPwd));

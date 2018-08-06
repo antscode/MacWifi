@@ -276,7 +276,7 @@ extern "C"
 
 				case ConnectRequest:
 				case Connecting:
-					SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr("Connecting to " + std::string(sharedData.ConnectSSID) + "..."));
+					SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr("Connecting to " + std::string(sharedData.ConnectName) + "..."));
 					DisableItem(glob.mHdl, itemCount);
 					break;
 
@@ -348,10 +348,12 @@ extern "C"
 				if (network.Mode == Open)
 				{
 					// Open network, so initiate connect request immediately
-					memset(&sharedData.ConnectSSID, 0, sizeof(sharedData.ConnectSSID));
+					memset(&sharedData.ConnectName, 0, sizeof(sharedData.ConnectName));
+					memset(&sharedData.ConnectId, 0, sizeof(sharedData.ConnectId));
 					memset(&sharedData.ConnectPwd, 0, sizeof(sharedData.ConnectPwd));
 
-					strcpy(sharedData.ConnectSSID, network.Name.c_str());
+					strcpy(sharedData.ConnectName, network.Name.c_str());
+					strcpy(sharedData.ConnectId, network.Id.c_str());
 					sharedData.ConnectMode = network.Mode;
 					sharedData.ConnectEncryption = network.Encryption;
 					sharedData.Status = ConnectRequest;
@@ -424,9 +426,11 @@ extern "C"
 				case 7:
 					if (_password[0] > 0)
 					{
-						memset(&sharedData.ConnectSSID, 0, sizeof(sharedData.ConnectSSID));
+						memset(&sharedData.ConnectName, 0, sizeof(sharedData.ConnectName));
+						memset(&sharedData.ConnectId, 0, sizeof(sharedData.ConnectId));
 						memset(&sharedData.ConnectPwd, 0, sizeof(sharedData.ConnectPwd));
-						strcpy(sharedData.ConnectSSID, network.Name.c_str());
+						strcpy(sharedData.ConnectName, network.Name.c_str());
+						strcpy(sharedData.ConnectId, network.Id.c_str());
 						strcpy(sharedData.ConnectPwd, Util::PtoStr(_password).c_str());
 
 						sharedData.ConnectMode = network.Mode;

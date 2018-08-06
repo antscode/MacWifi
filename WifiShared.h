@@ -36,6 +36,7 @@ struct Network
 {
 	public:
 		string Name;
+		string Id;
 		WifiMode Mode;
 		WifiEncryption Encryption;
 		bool Connected;
@@ -49,7 +50,8 @@ class WifiData
 		bool Error;
 		char ErrorMsg[255];
 		vector<Network> Networks;
-		char ConnectSSID[255];
+		char ConnectName[255];
+		char ConnectId[255];
 		char ConnectPwd[255];
 		WifiMode ConnectMode;
 		WifiEncryption ConnectEncryption;

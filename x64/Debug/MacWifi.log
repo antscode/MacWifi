@@ -1,0 +1,11 @@
+﻿  The system cannot find the path specified.
+EXEC : CMake error : The source directory "/cygdrive/c/Users/AnthonySuper/source/repos" does not appear to contain CMakeLists.txt.
+  Specify --help for usage, or press the help button on the CMake GUI.
+  make: *** No targets specified and no makefile found.  Stop.
+  File not found - *.APPL
+  0 File(s) copied
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\VC\VCTargets\Microsoft.MakeFile.Targets(44,5): error MSB3073: The command "set errorlevel=0
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\VC\VCTargets\Microsoft.MakeFile.Targets(44,5): error MSB3073: cd C:\Users\AnthonySuper\source\repos\MacWifi\Debug
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\VC\VCTargets\Microsoft.MakeFile.Targets(44,5): error MSB3073: cmake .. -DCMAKE_TOOLCHAIN_FILE=~/Retro68-build/toolchain/m68k-apple-macos/cmake/retro68.toolchain.cmake
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\VC\VCTargets\Microsoft.MakeFile.Targets(44,5): error MSB3073: make 
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\VC\VCTargets\Microsoft.MakeFile.Targets(44,5): error MSB3073: xcopy *.APPL "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\BasiliskII\Virtual Desktop\" /y /s" exited with code -1.

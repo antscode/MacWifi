@@ -1,4 +1,5 @@
 #include "Modules\VM300.h"
+#include "Modules\OpenWRT.h"
 
 typedef int MemLoc;
 typedef MemLoc* MemLocPtr;

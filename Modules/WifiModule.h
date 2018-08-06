@@ -16,7 +16,7 @@ class WifiModule
 	public:
 		WifiData* WifiDataPtr;
 		virtual void GetNetworks() = 0;
-		virtual void Connect(std::string ssid, WifiMode mode, WifiEncryption encryption, std::string pwd) = 0;
+		virtual void Connect(std::string name, std::string id, WifiMode mode, WifiEncryption encryption, std::string pwd) = 0;
 
 	protected:
 		void DoError(std::string errorMsg);

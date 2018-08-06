@@ -33,6 +33,7 @@ add_application(MacWifi
 	resources.r
 	Modules/WifiModule.cpp
 	Modules/VM300.cpp
+	Modules/OpenWRT.cpp
 	Comms.cpp
 	Util.cpp
 
@@ -43,7 +44,7 @@ add_application(MacWifi
 	CREATOR "MWFI"
 )
 
-target_link_libraries(MacWifi MacHTTP MacTCPHelper)
+target_link_libraries(MacWifi MacHTTP MacTCPHelper jsoncpp)
 
 # again, add some options to make things smaller.
 set_target_properties(MacWifi PROPERTIES COMPILE_OPTIONS -ffunction-sections)
