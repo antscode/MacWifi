@@ -13,7 +13,6 @@ public:
 	virtual void Connect(string name, string id, WifiMode mode, WifiEncryption encryption, string pwd);
 
 private:
-	const string _baseUri = "http://192.168.8.1";
 	std::function<void()> _onLoginComplete;
 	string _ssid;
 	string _bssid;

@@ -15,7 +15,8 @@ enum WifiStatus
 	Connecting,
 	RestartRequired,
 	RestartRequest,
-	Restarting
+	Restarting,
+	SavePrefsRequest
 };
 
 enum WifiMode
@@ -50,6 +51,10 @@ class WifiData
 		bool Error;
 		char ErrorMsg[255];
 		vector<Network> Networks;
+		int Device;
+		char Hostname[255];
+		char Username[255];
+		char Password[255];
 		char ConnectName[255];
 		char ConnectId[255];
 		char ConnectPwd[255];

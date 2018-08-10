@@ -3,6 +3,8 @@
 #include "MacTypes.r"
 #include "Processes.r"
 #include "Dialogs.r"
+#include "Menus.r"
+#include "Controls.r"
 
 type 'INIT' {
 	RETRO68_CODE_TYPE
@@ -108,6 +110,82 @@ resource 'DITL' (129, purgeable) {
 
 		{8, 72, 70, 380},
 		StaticText { disabled, "^0" };
+	}
+};
+
+resource 'DLOG' (130, purgeable) {
+	{ 0, 0, 249, 377 },
+	dBoxProc,
+	visible,
+	goAway,
+	0,
+	130,
+	"",
+	alertPositionMainScreen
+};
+
+data 'dctb' (130, purgeable) {
+   $"0000 0000 0000 FFFF"
+};
+
+resource 'MENU' (130) {
+    130, textMenuProc;
+    allEnabled, enabled;
+    "Wifi Module";
+    {
+        "Vonets", noIcon, noKey, noMark, plain;
+        "OpenWRT", noIcon, noKey, noMark, plain;
+    }
+};
+
+resource 'CNTL' (130) {
+    { 36, 162, 52, 350 },
+    0,
+    visible,
+    0,
+    130,
+    1008,
+    0,
+    "Wifi Module"
+};
+
+resource 'DITL' (130, purgeable) {
+	{
+		{ 12, 24, 44, 56 },
+		Icon { enabled, 262 };
+
+		{ 12, 80, 26, 350 },
+		StaticText { enabled, "Wifi Settings" };
+
+		{ 40, 80, 56, 160 },
+		StaticText { enabled, "Device:" };
+		
+		{ 40, 162, 56, 350 },
+		Control { enabled, 130 };
+
+		{ 70, 80, 90, 160 },
+		StaticText { enabled, "Hostname:" };
+
+		{ 66, 162, 82, 350 },
+		EditText { enabled, "" };
+
+		{ 100, 80, 110, 160 },
+		StaticText { enabled, "Username:" };
+
+		{ 96, 162, 112, 350 },
+		EditText { enabled, "" };
+
+		{ 130, 80, 140, 160 },
+		StaticText { enabled, "Password:" };
+
+		{ 126, 162, 142, 350 },
+		EditText { enabled, "" };
+
+		{ 180, 224, 200, 291 },
+		Button { enabled, "Cancel" };
+
+		{ 180, 306, 200, 362 },
+		Button { enabled, "OK" };
 	}
 };
 

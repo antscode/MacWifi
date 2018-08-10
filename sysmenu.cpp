@@ -231,29 +231,31 @@ extern "C"
 				itemCount--;
 			}
 
-			// Append any known networks
-			for (std::vector<Network>::iterator it = sharedData.Networks.begin(); it != sharedData.Networks.end(); ++it)
-			{
-				AppendMenu(glob.mHdl, "\p ");
-				itemCount++;
-
-				std::string ssid = it->Name.c_str();
-				SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr(ssid));
-
-				if (it->Connected)
-					SetItemMark(glob.mHdl, itemCount, checkMark);
-
-				if (sharedData.Status != Idle)
-				{
-					DisableItem(glob.mHdl, itemCount);
-				}
-			}
-
 			if (sharedData.Error)
 			{
 				AppendMenu(glob.mHdl, "\p ");
 				itemCount++;
 				SetMenuItemText(glob.mHdl, itemCount, "\pError");
+			}
+			else
+			{
+				// Append any known networks
+				for (std::vector<Network>::iterator it = sharedData.Networks.begin(); it != sharedData.Networks.end(); ++it)
+				{
+					AppendMenu(glob.mHdl, "\p ");
+					itemCount++;
+
+					std::string ssid = it->Name.c_str();
+					SetMenuItemText(glob.mHdl, itemCount, Util::StrToPStr(ssid));
+
+					if (it->Connected)
+						SetItemMark(glob.mHdl, itemCount, checkMark);
+
+					if (sharedData.Status != Idle)
+					{
+						DisableItem(glob.mHdl, itemCount);
+					}
+				}
 			}
 
 			if (itemCount > 0)
@@ -292,6 +294,10 @@ extern "C"
 
 				default:
 					SetMenuItemText(glob.mHdl, itemCount, "\pRefresh networks");
+
+					AppendMenu(glob.mHdl, "\p ");
+					itemCount++;
+					SetMenuItemText(glob.mHdl, itemCount, "\pSettings...");
 					break;
 			}
 
@@ -327,8 +333,11 @@ extern "C"
 
 			if (name == "Error")
 			{
-				// Error item selected, show error message
 				ShowError();
+			}
+			else if (name == "Settings...")
+			{
+				ShowSettings();
 			}
 			else if (name == "Refresh networks")
 			{
@@ -458,6 +467,88 @@ extern "C"
 		ParamText(Util::StrToPStr(errMsg), nil, nil, nil);
 		StopAlert(129, nil);
 
+		CloseResFile(homeResFile);
+		UseResFile(curResFile);
+	}
+
+	void ShowSettings()
+	{
+		DialogItemType type;
+		Handle itemH;
+		Rect box;
+		Str255 pStr;
+
+		short curResFile = CurResFile();
+		short homeResFile = FSpOpenResFile(&glob.homeFile, fsRdPerm);
+
+		DialogPtr dialog = GetNewDialog(130, 0, (WindowPtr)-1);
+		MacSetPort(dialog);
+
+		// Set device
+		GetDialogItem(dialog, 4, &type, &itemH, &box);
+		SetControlValue((ControlHandle)itemH, sharedData.Device);
+
+		// Set hostname
+		std::string hostname = sharedData.Hostname;
+		GetDialogItem(dialog, 6, &type, &itemH, &box);
+		SetDialogItemText(itemH, Util::StrToPStr(hostname));
+
+		// Set username
+		std::string username = sharedData.Username;
+		GetDialogItem(dialog, 8, &type, &itemH, &box);
+		SetDialogItemText(itemH, Util::StrToPStr(username));
+
+		// Set password
+		std::string password = sharedData.Password;
+		GetDialogItem(dialog, 10, &type, &itemH, &box);
+		SetDialogItemText(itemH, Util::StrToPStr(password));
+
+		Util::FrameDefaultButton(dialog, 12, true);
+
+		short item;
+		bool dialogActive = true;
+
+		while (dialogActive)
+		{
+			ModalDialog(nil, &item);
+
+			switch (item)
+			{
+				case 11:
+					dialogActive = false;
+					break;
+
+				case 12:
+					memset(&sharedData.Hostname, 0, sizeof(sharedData.Hostname));
+					memset(&sharedData.Username, 0, sizeof(sharedData.Username));
+					memset(&sharedData.Password, 0, sizeof(sharedData.Password));
+
+					// Get device
+					GetDialogItem(dialog, 4, &type, &itemH, &box);
+					sharedData.Device = GetControlValue((ControlHandle)itemH);
+
+					// Get hostname
+					GetDialogItem(dialog, 6, &type, &itemH, &box);
+					GetDialogItemText(itemH, pStr);
+					strcpy(sharedData.Hostname, Util::PtoCStr(pStr));
+
+					// Get username
+					GetDialogItem(dialog, 8, &type, &itemH, &box);
+					GetDialogItemText(itemH, pStr);
+					strcpy(sharedData.Username, Util::PtoCStr(pStr));
+
+					// Get password
+					GetDialogItem(dialog, 10, &type, &itemH, &box);
+					GetDialogItemText(itemH, pStr);
+					strcpy(sharedData.Password, Util::PtoCStr(pStr));
+
+					sharedData.Status = SavePrefsRequest;
+					dialogActive = false;
+					break;
+			}
+		}
+
+		DisposeDialog(dialog);
 		CloseResFile(homeResFile);
 		UseResFile(curResFile);
 	}

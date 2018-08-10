@@ -3,16 +3,21 @@
 #include <string.h>
 #include "WifiShared.h"
 #include "MacWifi.h"
+#include "Prefs.h"
+#include "Modules\VM300.h"
+#include "Modules\OpenWRT.h"
 
 WifiData* _sharedDataPtr = 0;
-OpenWRT _wifiModule; // VM300 _wifiModule;
+Prefs _prefs;
 
 int main()
 {	
 	EventRecord event;
-	
+	WifiModule* wifiModule;
+
 	EventInit();
 	GetSharedData();
+	GetPrefs();	
 
 	while (_run)
 	{
@@ -38,13 +43,17 @@ int main()
 					case ScanRequest:
 						_sharedDataPtr->Status = Scanning;
 						_sharedDataPtr->Error = false;
-						_wifiModule.GetNetworks();
+
+						wifiModule = GetWifiModule();
+						wifiModule->GetNetworks();
 						break;
 
 					case ConnectRequest:
 						_sharedDataPtr->Status = Connecting;
 						_sharedDataPtr->Error = false;
-						_wifiModule.Connect(
+
+						wifiModule = GetWifiModule();
+						wifiModule->Connect(
 							std::string(_sharedDataPtr->ConnectName),
 							std::string(_sharedDataPtr->ConnectId),
 							_sharedDataPtr->ConnectMode,
@@ -56,6 +65,13 @@ int main()
 						_sharedDataPtr->Status = Restarting;
 						_sharedDataPtr->Error = false;
 						Restart();
+						break;
+
+					case SavePrefsRequest:
+						SavePrefs();
+						_sharedDataPtr->Status = ScanRequest;
+						_sharedDataPtr->Error = false;
+						_sharedDataPtr->UpdateUI = true;
 						break;
 				}
 
@@ -72,12 +88,53 @@ void GetSharedData()
 	if (ResError() != resNotFound)
 	{
 		_sharedDataPtr = (WifiData*)**memHandle;
-		_wifiModule.WifiDataPtr = _sharedDataPtr;
 
 		RemoveResource((Handle)memHandle);
 		UpdateResFile(CurResFile());
 		ReleaseResource((Handle)memHandle);
 	}
+}
+
+void GetPrefs()
+{
+	memset(_sharedDataPtr->Hostname, 0, sizeof(_sharedDataPtr->Hostname));
+	memset(_sharedDataPtr->Username, 0, sizeof(_sharedDataPtr->Username));
+	memset(_sharedDataPtr->Password, 0, sizeof(_sharedDataPtr->Password));
+
+	if (_prefs.Data.isMember("device"))
+	{
+		_sharedDataPtr->Device = _prefs.Data["device"].asInt();
+		strcpy(_sharedDataPtr->Hostname, _prefs.Data["hostname"].asCString());
+		strcpy(_sharedDataPtr->Username, _prefs.Data["username"].asCString());
+		strcpy(_sharedDataPtr->Password, _prefs.Data["password"].asCString());
+	}
+	else
+	{
+		// Default to Vonets default settings
+		_sharedDataPtr->Device = 1;
+		strcpy(_sharedDataPtr->Hostname, "http://vonets.cfg");
+		strcpy(_sharedDataPtr->Username, "admin");
+		strcpy(_sharedDataPtr->Password, "admin");
+	}
+}
+
+WifiModule* GetWifiModule()
+{
+	WifiModule* wifiModule;
+
+	switch (_sharedDataPtr->Device)
+	{
+		case 2:
+			wifiModule = new OpenWRT;
+			break;
+
+		default:
+			wifiModule = new VM300;
+			break;
+	}
+
+	wifiModule->WifiDataPtr = _sharedDataPtr;
+	return wifiModule;
 }
 
 void EventInit()
@@ -115,6 +172,15 @@ void Restart()
 	AEDisposeDesc(&finderAddr);
 	AEDisposeDesc(&myShutDown);
 	AEDisposeDesc(&nilReply);
+}
+
+void SavePrefs()
+{
+	_prefs.Data["device"] = _sharedDataPtr->Device;
+	_prefs.Data["hostname"] = _sharedDataPtr->Hostname;
+	_prefs.Data["username"] = _sharedDataPtr->Username;
+	_prefs.Data["password"] = _sharedDataPtr->Password;
+	_prefs.Save();
 }
 
 pascal OSErr Quit(AppleEvent* appleEvent, AppleEvent* reply, long refCon)

@@ -67,6 +67,7 @@ extern "C"
 	pascal Boolean PSWDModalFilter(DialogPtr theDialog, EventRecord *theEvent, short *itemHit);
 	void ShowConnectDialog(Network& network);
 	void ShowError();
+	void ShowSettings();
 	void PasswordKey(TEHandle teHndl, char theKey);
 	string GetWifiModeLabel(WifiMode mode);
 }

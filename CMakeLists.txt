@@ -36,6 +36,7 @@ add_application(MacWifi
 	Modules/OpenWRT.cpp
 	Comms.cpp
 	Util.cpp
+	Prefs.cpp
 
     # the separately compiled WDEF resource
     ${CMAKE_CURRENT_BINARY_DIR}/MacWifiINIT.rsrc.bin   

@@ -12,7 +12,6 @@ class VM300 : public WifiModule
 		virtual void Connect(string name, string id, WifiMode mode, WifiEncryption encryption, string pwd);
 		
 	private:
-		const string _baseUri = "http://vonets.cfg";
 		std::function<void()> _onLoginComplete;
 		string _ssid;
 		WifiMode _mode;
