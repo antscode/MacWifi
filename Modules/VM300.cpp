@@ -9,7 +9,7 @@ void VM300::Login(std::function<void()> onComplete)
 	_onLoginComplete = onComplete;
 
 	Comms::Http.Post(
-		string(WifiDataPtr->Hostname) + "/goform/login",
+		"http://" + string(WifiDataPtr->Hostname) + "/goform/login",
 		"username=" + string(WifiDataPtr->Username) + "&z999=z999&password=" + string(WifiDataPtr->Password) + "&Login=&platform=pc",
 		std::bind(&VM300::LoginResponse, this, _1));
 }
@@ -34,7 +34,7 @@ void VM300::GetNetworks()
 void VM300::GetConnectedNetworkRequest()
 {
 	Comms::Http.Get(
-		string(WifiDataPtr->Hostname) + "/adm/status.asp",
+		"http://" + string(WifiDataPtr->Hostname) + "/adm/status.asp",
 		std::bind(&VM300::GetConnectedNetworkResponse, this, _1));
 }
 
@@ -76,7 +76,7 @@ void VM300::GetConnectedNetworkResponse(HttpResponse response)
 void VM300::GetNetworksRequest()
 {
 	Comms::Http.Get(
-		string(WifiDataPtr->Hostname) + "/goform/get_web_hotspots_list",
+		"http://" + string(WifiDataPtr->Hostname) + "/goform/get_web_hotspots_list",
 		std::bind(&VM300::GetNetworksResponse, this, _1));
 }
 
@@ -153,7 +153,7 @@ void VM300::Connect(string name, string id, WifiMode mode, WifiEncryption encryp
 void VM300::DeleteHotspotsRequest()
 {
 	Comms::Http.Post(
-		string(WifiDataPtr->Hostname) + "/goform/deleteAllHotspots", "",
+		"http://" + string(WifiDataPtr->Hostname) + "/goform/deleteAllHotspots", "",
 		std::bind(&VM300::DeleteHotspotsResponse, this, _1));
 }
 
@@ -179,7 +179,7 @@ void VM300::DeleteHotspotsResponse(HttpResponse response)
 void VM300::ConnectRequest()
 {
 	Comms::Http.Post(
-		string(WifiDataPtr->Hostname) + "/goform/wirelessBrdgApcli",
+		"http://" + string(WifiDataPtr->Hostname) + "/goform/wirelessBrdgApcli",
 		"apcli_ssid=" + Util::UrlEncode(_ssid) +
 		"&apcli_mode=" + GetWifiModeStr(_mode) +
 		"&apcli_enc=" + GetEncryptionStr(_encryption) +
@@ -224,7 +224,7 @@ void VM300::Restart()
 void VM300::RestartRequest()
 {
 	Comms::Http.Post(
-		string(WifiDataPtr->Hostname) + "/goform/SystemCommand",
+		"http://" + string(WifiDataPtr->Hostname) + "/goform/SystemCommand",
 		"command=reboot&SystemCommandSubmit=Restart",
 		std::bind(&VM300::RestartResponse, this, _1));
 }

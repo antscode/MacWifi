@@ -1,5 +1,5 @@
 /*
-	Copyright 2018 Anthony Super.
+	2018 Anthony Super.
 	System Menu INIT code based on "SysMenu" shell project by Matt Slot, circa 1995.
 */
 
@@ -64,7 +64,8 @@ extern "C"
 	pascal void Patched_DrawMenuBar(void);
 	pascal long Patched_MenuSelect(Point where);
 	pascal void Patched_SystemMenu(long result); 
-	pascal Boolean PSWDModalFilter(DialogPtr theDialog, EventRecord *theEvent, short *itemHit);
+	pascal Boolean PSWDModalFilter(DialogPtr dialog, EventRecord *theEvent, short *itemHit);
+	pascal Boolean SettingsModalFilter(DialogPtr dialog, EventRecord *theEvent, short *itemHit);
 	void ShowConnectDialog(Network& network);
 	void ShowError();
 	void ShowSettings();

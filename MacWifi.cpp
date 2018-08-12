@@ -112,7 +112,7 @@ void GetPrefs()
 	{
 		// Default to Vonets default settings
 		_sharedDataPtr->Device = 1;
-		strcpy(_sharedDataPtr->Hostname, "http://vonets.cfg");
+		strcpy(_sharedDataPtr->Hostname, "vonets.cfg");
 		strcpy(_sharedDataPtr->Username, "admin");
 		strcpy(_sharedDataPtr->Password, "admin");
 	}

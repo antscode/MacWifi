@@ -108,6 +108,21 @@ void Util::FrameDefaultButton(DialogPtr dialog, short itemNo, bool active)
 	}
 }
 
+bool Util::IsControlHilited(DialogPtr dialog, short itemNo)
+{
+	DialogItemType type;
+	Handle itemH;
+	Rect box;
+
+	GetDialogItem(dialog, itemNo, &type, &itemH, &box);
+	
+	ControlRef ctrlRef = (ControlRef)itemH;
+	ControlPtr ctrlPtr = *ctrlRef;
+	ControlRecord control = *ctrlPtr;
+
+	return control.contrlHilite == 0;
+}
+
 string Util::UrlEncode(string &value) 
 {
 	ostringstream escaped;

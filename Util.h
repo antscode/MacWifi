@@ -15,6 +15,7 @@ class Util
 		static unsigned char* StrToPStr(string str);
 		static void Debug(string msg);
 		static void FrameDefaultButton(DialogPtr dialog, short itemNo, bool active);
+		static bool IsControlHilited(DialogPtr dialog, short itemNo);
 		static string UrlEncode(string &value);
 		static double MicrosecondToDouble(register const UnsignedWide *epochPtr);
 };

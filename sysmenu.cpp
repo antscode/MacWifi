@@ -1,5 +1,5 @@
 /*
-	Copyright 2018 Anthony Super.
+	2018 Anthony Super.
 	System Menu INIT code based on "SysMenu" shell project by Matt Slot, circa 1995.
 	Password field based on code snippet by Phil Kearney, circa 1994.
 */
@@ -411,14 +411,14 @@ extern "C"
 		pwdCtrl = (ControlHandle)itemH;
 		_showPassword = GetControlValue(pwdCtrl);
 
-		ModalFilterUPP pwdFilterProc = NewModalFilterProc(PSWDModalFilter);
+		ModalFilterUPP filterProc = NewModalFilterProc(PSWDModalFilter);
 
 		short item;
 		bool dialogActive = true;
 
 		while (dialogActive)
 		{
-			ModalDialog(pwdFilterProc, &item);
+			ModalDialog(filterProc, &item);
 
 			switch (item)
 			{
@@ -476,13 +476,18 @@ extern "C"
 		DialogItemType type;
 		Handle itemH;
 		Rect box;
-		Str255 pStr;
+		Str255 pHostname, pUsername, pPassword;
 
 		short curResFile = CurResFile();
 		short homeResFile = FSpOpenResFile(&glob.homeFile, fsRdPerm);
 
 		DialogPtr dialog = GetNewDialog(130, 0, (WindowPtr)-1);
 		MacSetPort(dialog);
+
+		MoveTo(82, 29);
+		PenSize(1, 1);
+		PenNormal();
+		MacLineTo(352, 29);
 
 		// Set device
 		GetDialogItem(dialog, 4, &type, &itemH, &box);
@@ -505,12 +510,28 @@ extern "C"
 
 		Util::FrameDefaultButton(dialog, 12, true);
 
+		ModalFilterUPP filterProc = NewModalFilterProc(SettingsModalFilter);
+
 		short item;
 		bool dialogActive = true;
 
 		while (dialogActive)
 		{
-			ModalDialog(nil, &item);
+			ModalDialog(filterProc, &item);
+
+			// Get hostname
+			GetDialogItem(dialog, 6, &type, &itemH, &box);
+			GetDialogItemText(itemH, pHostname);
+
+			// Get username
+			GetDialogItem(dialog, 8, &type, &itemH, &box);
+			GetDialogItemText(itemH, pUsername);
+
+			// Get password
+			GetDialogItem(dialog, 10, &type, &itemH, &box);
+			GetDialogItemText(itemH, pPassword);
+
+			Util::FrameDefaultButton(dialog, 12, (pHostname[0] > 0 && pUsername[0] > 0 && pPassword[0] > 0));
 
 			switch (item)
 			{
@@ -523,24 +544,18 @@ extern "C"
 					memset(&sharedData.Username, 0, sizeof(sharedData.Username));
 					memset(&sharedData.Password, 0, sizeof(sharedData.Password));
 
-					// Get device
+					// Set device
 					GetDialogItem(dialog, 4, &type, &itemH, &box);
 					sharedData.Device = GetControlValue((ControlHandle)itemH);
 
-					// Get hostname
-					GetDialogItem(dialog, 6, &type, &itemH, &box);
-					GetDialogItemText(itemH, pStr);
-					strcpy(sharedData.Hostname, Util::PtoCStr(pStr));
+					// Set hostname
+					strcpy(sharedData.Hostname, Util::PtoCStr(pHostname));
 
-					// Get username
-					GetDialogItem(dialog, 8, &type, &itemH, &box);
-					GetDialogItemText(itemH, pStr);
-					strcpy(sharedData.Username, Util::PtoCStr(pStr));
+					// Set username
+					strcpy(sharedData.Username, Util::PtoCStr(pUsername));
 
-					// Get password
-					GetDialogItem(dialog, 10, &type, &itemH, &box);
-					GetDialogItemText(itemH, pStr);
-					strcpy(sharedData.Password, Util::PtoCStr(pStr));
+					// Set password
+					strcpy(sharedData.Password, Util::PtoCStr(pPassword));
 
 					sharedData.Status = SavePrefsRequest;
 					dialogActive = false;
@@ -553,7 +568,7 @@ extern "C"
 		UseResFile(curResFile);
 	}
 
-	pascal Boolean PSWDModalFilter(DialogPtr theDialog, EventRecord *theEvent, short *itemHit)
+	pascal Boolean PSWDModalFilter(DialogPtr dialog, EventRecord *theEvent, short *itemHit)
 	{
 		char key;
 		ModalFilterProcPtr theModalProc;
@@ -566,26 +581,75 @@ extern "C"
 			{
 				case kEnterCharCode:
 				case kReturnCharCode:
-					*itemHit = 7;
-					return true;
+					if (Util::IsControlHilited(dialog, 7))
+					{
+						*itemHit = 7;
+						return true;
+					}
+					else
+					{
+						theEvent->what = 0;
+						*itemHit = 0;
+						return false;
+					}
 
 				case kEscapeCharCode:  
 					*itemHit = 6;
 					return true;
 			
 				default:
-					PasswordKey(((DialogPeek)theDialog)->textH, key);
+					PasswordKey(((DialogPeek)dialog)->textH, key);
 					theEvent->what = 0;
 					*itemHit = 0;
 
 					// Set enabled state of Join button based on password length
-					Util::FrameDefaultButton(theDialog, 7, (_password[0] > 0));
+					Util::FrameDefaultButton(dialog, 7, (_password[0] > 0));
 					return false;
 			}
 		}
 
 		GetStdFilterProc(&theModalProc);
-		return (theModalProc(theDialog, theEvent, itemHit));
+		return (theModalProc(dialog, theEvent, itemHit));
+	}
+
+	pascal Boolean SettingsModalFilter(DialogPtr dialog, EventRecord *theEvent, short *itemHit)
+	{
+		char key;
+
+		ModalFilterProcPtr theModalProc;
+
+		switch (theEvent->what) 
+		{
+			case keyDown:
+			{
+				key = (char)(theEvent->message & charCodeMask);
+
+				switch (key)
+				{
+					case kEnterCharCode:
+					case kReturnCharCode:
+						if (Util::IsControlHilited(dialog, 12))
+						{
+							*itemHit = 12;
+							return true;
+						}
+						else
+						{
+							theEvent->what = 0;
+							*itemHit = 0;
+							return false;
+						}
+
+					case kEscapeCharCode:
+						*itemHit = 11;
+						return true;
+				}
+				break;
+			}
+		}
+
+		GetStdFilterProc(&theModalProc);
+		return (theModalProc(dialog, theEvent, itemHit));
 	}
 
 	void PasswordKey(TEHandle teHndl, char theKey)

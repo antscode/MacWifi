@@ -7,7 +7,7 @@ void OpenWRT::Login(std::function<void()> onComplete)
 	_onLoginComplete = onComplete;
 
 	Comms::Http.Post(
-		string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/auth",
+		"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/auth",
 		"{ \"id\": 1, \"method\": \"login\", \"params\": [ \"" + string(WifiDataPtr->Username) + "\", \"" + string(WifiDataPtr->Password) + "\" ] }",
 		std::bind(&OpenWRT::LoginResponse, this, _1));
 }
@@ -64,7 +64,7 @@ void OpenWRT::GetNetworks()
 void OpenWRT::GetConnectedNetworkRequest()
 {
 	Comms::Http.Post(
-		string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+		"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
 		"{ \"id\": 1, \"method\": \"get_all\", \"params\": [ \"wireless\", \"@wifi-iface[0]\" ] }",
 		std::bind(&OpenWRT::GetConnectedNetworkResponse, this, _1));
 }
@@ -117,7 +117,7 @@ void OpenWRT::GetConnectedNetworkResponse(HttpResponse response)
 void OpenWRT::GetNetworksRequest()
 {
 	Comms::Http.Post(
-		string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/sys?auth=" + _token,
+		"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/sys?auth=" + _token,
 		"{ \"id\": 1, \"method\": \"wifi.getiwinfo\", \"params\": [ \"@wifi-device[0]\", \"scanlist\" ] }",
 		std::bind(&OpenWRT::GetNetworksResponse, this, _1));
 }
@@ -181,7 +181,7 @@ void OpenWRT::Connect(string name, string id, WifiMode mode, WifiEncryption encr
 void OpenWRT::SetSsidRequest()
 {
 	Comms::Http.Post(
-		string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+		"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
 		"{ \"id\": 1, \"method\": \"set\", \"params\": [ \"wireless\", \"@wifi-iface[0]\", \"ssid\", \"" + _ssid + "\" ] }",
 		std::bind(&OpenWRT::SetBssidRequest, this, _1));
 }
@@ -193,7 +193,7 @@ void OpenWRT::SetBssidRequest(HttpResponse response)
 		if (response.StatusCode == 200)
 		{
 			Comms::Http.Post(
-				string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+				"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
 				"{ \"id\": 1, \"method\": \"set\", \"params\": [ \"wireless\", \"@wifi-iface[0]\", \"bssid\", \"" + _bssid + "\" ] }",
 				std::bind(&OpenWRT::SetEncryptionRequest, this, _1));
 		}
@@ -215,7 +215,7 @@ void OpenWRT::SetEncryptionRequest(HttpResponse response)
 		if (response.StatusCode == 200)
 		{
 			Comms::Http.Post(
-				string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+				"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
 				"{ \"id\": 1, \"method\": \"set\", \"params\": [ \"wireless\", \"@wifi-iface[0]\", \"encryption\", \"" + GetEncryptionStr(_mode) + "\" ] }",
 				std::bind(&OpenWRT::SetKeyRequest, this, _1));
 		}
@@ -237,7 +237,7 @@ void OpenWRT::SetKeyRequest(HttpResponse response)
 		if (response.StatusCode == 200)
 		{
 			Comms::Http.Post(
-				string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+				"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
 				"{ \"id\": 1, \"method\": \"set\", \"params\": [ \"wireless\", \"@wifi-iface[0]\", \"key\", \"" + _pwd + "\" ] }",
 				std::bind(&OpenWRT::CommitRequest, this, _1));
 		}
@@ -259,7 +259,7 @@ void OpenWRT::CommitRequest(HttpResponse response)
 		if (response.StatusCode == 200)
 		{
 			Comms::Http.Post(
-				string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+				"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
 				"{ \"id\": 1, \"method\": \"commit\", \"params\": [ \"wireless\" ] }",
 				std::bind(&OpenWRT::ReloadRequest, this, _1));
 		}
@@ -281,7 +281,7 @@ void OpenWRT::ReloadRequest(HttpResponse response)
 		if (response.StatusCode == 200)
 		{
 			Comms::Http.Post(
-				string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/sys?auth=" + _token,
+				"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/sys?auth=" + _token,
 				"{ \"id\": 1, \"method\": \"exec\", \"params\": [ \"luci-reload\" ] }",
 				std::bind(&OpenWRT::ReloadResponse, this, _1));
 		}

@@ -114,7 +114,7 @@ resource 'DITL' (129, purgeable) {
 };
 
 resource 'DLOG' (130, purgeable) {
-	{ 0, 0, 249, 377 },
+	{ 0, 0, 213, 377 },
 	dBoxProc,
 	visible,
 	goAway,
@@ -139,7 +139,7 @@ resource 'MENU' (130) {
 };
 
 resource 'CNTL' (130) {
-    { 36, 162, 52, 350 },
+    { 47, 159, 66, 350 },
     0,
     visible,
     0,
@@ -154,37 +154,37 @@ resource 'DITL' (130, purgeable) {
 		{ 12, 24, 44, 56 },
 		Icon { enabled, 262 };
 
-		{ 12, 80, 26, 350 },
+		{ 12, 80, 22, 350 },
 		StaticText { enabled, "Wifi Settings" };
 
-		{ 40, 80, 56, 160 },
+		{ 49, 80, 65, 155 },
 		StaticText { enabled, "Device:" };
 		
-		{ 40, 162, 56, 350 },
+		{ 47, 159, 66, 350 },
 		Control { enabled, 130 };
 
-		{ 70, 80, 90, 160 },
-		StaticText { enabled, "Hostname:" };
+		{ 77, 80, 97, 160 },
+		StaticText { enabled, "Host:" };
 
-		{ 66, 162, 82, 350 },
+		{ 76, 162, 92, 350 },
 		EditText { enabled, "" };
 
-		{ 100, 80, 110, 160 },
+		{ 107, 80, 117, 160 },
 		StaticText { enabled, "Username:" };
 
-		{ 96, 162, 112, 350 },
+		{ 106, 162, 122, 350 },
 		EditText { enabled, "" };
 
-		{ 130, 80, 140, 160 },
+		{ 137, 80, 147, 160 },
 		StaticText { enabled, "Password:" };
 
-		{ 126, 162, 142, 350 },
+		{ 136, 162, 152, 350 },
 		EditText { enabled, "" };
 
-		{ 180, 224, 200, 291 },
+		{ 174, 211, 194, 278 },
 		Button { enabled, "Cancel" };
 
-		{ 180, 306, 200, 362 },
+		{ 174, 293, 194, 349 },
 		Button { enabled, "OK" };
 	}
 };
