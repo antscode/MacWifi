@@ -11,7 +11,14 @@ int main();
 void GetSharedData();
 void EventInit();
 void GetPrefs();
-WifiModule* GetWifiModule();
+void GetWifiModule();
 void Restart();
 void SavePrefs();
+void InitTunnel(string requestUri);
+
+bool _requestComplete;
+HttpResponse _response;
+void RequestComplete(HttpResponse response);
+
+pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long refCon);
 pascal OSErr Quit(AppleEvent* appleEvent, AppleEvent* reply, long refCon);

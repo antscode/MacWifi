@@ -73,6 +73,20 @@ void Util::Debug(std::string msg)
 	fclose(fp);
 }
 
+void Util::DebugClient(std::string msg)
+{
+	FILE *fp;
+	fp = fopen("Mac HD (68K):wificlient.txt", "a");
+
+	if (fp)
+	{
+		fprintf(fp, msg.c_str());
+		fflush(fp);
+	}
+
+	fclose(fp);
+}
+
 void Util::FrameDefaultButton(DialogPtr dialog, short itemNo, bool active)
 {
 	DialogItemType type;

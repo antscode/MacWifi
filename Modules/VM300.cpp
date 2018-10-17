@@ -264,6 +264,11 @@ void VM300::RestartResponse(HttpResponse response)
 	}
 }
 
+void VM300::GetTunnel(string connect, function<void(string, int)> onComplete)
+{
+	// TODO: Not implemented, return error
+}
+
 string VM300::GetWifiModeStr(WifiMode mode)
 {
 	switch (mode)

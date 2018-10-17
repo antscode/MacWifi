@@ -50,3 +50,28 @@ target_link_libraries(MacWifi MacHTTP MacTCPHelper jsoncpp)
 # again, add some options to make things smaller.
 set_target_properties(MacWifi PROPERTIES COMPILE_OPTIONS -ffunction-sections)
 set_target_properties(MacWifi PROPERTIES LINK_FLAGS "-Wl,-gc-sections")
+
+# MacWifi client library
+add_library(MacWifiLib STATIC
+	MacWifiLib.cpp
+)
+
+install(TARGETS MacWifiLib
+    DESTINATION "lib"
+)
+
+install(FILES MacWifiLib.h
+    DESTINATION "include/macwifi"
+)
+
+add_application(MacWifiTest
+	MacWifiTest.cpp
+	MacWifiTest.r
+	Util.cpp
+	CONSOLE
+)
+
+target_link_libraries(MacWifiTest MacWifiLib)
+
+set_target_properties(MacWifiTest PROPERTIES COMPILE_OPTIONS -ffunction-sections)
+set_target_properties(MacWifiTest PROPERTIES LINK_FLAGS "-Wl,-gc-sections")

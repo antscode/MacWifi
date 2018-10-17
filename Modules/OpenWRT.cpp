@@ -1,5 +1,6 @@
 #include <string>
 #include <sstream> 
+#include <algorithm>
 #include "OpenWRT.h"
 
 void OpenWRT::Login(std::function<void()> onComplete)
@@ -318,6 +319,286 @@ void OpenWRT::ReloadResponse(HttpResponse response)
 	else
 	{
 		DoError("ReloadRequest: " + response.ErrorMsg);
+	}
+}
+
+void OpenWRT::InitStunnel()
+{
+	_tunnels.clear();
+	_tunnelPort = 0;
+
+	Comms::Http.Post(
+		"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+		"{ \"id\": 1, \"method\": \"get_all\", \"params\": [ \"stunnel\" ] }",
+		std::bind(&OpenWRT::PopulateTunnelCache, this, _1));
+}
+
+void OpenWRT::PopulateTunnelCache(HttpResponse response)
+{
+	if (response.Success)
+	{
+		if (response.StatusCode == 200)
+		{
+			Json::Value root;
+			Json::Reader reader;
+			string connect;
+			int port;
+			bool parseSuccess = reader.parse(response.Content.c_str(), root);
+
+			if (parseSuccess)
+			{
+				if (root.isMember("error") && !root["error"].empty())
+				{
+					// TODO DoError("GetConnectedNetwork: " + root["error"]["message"].asString());
+					return;
+				}
+
+				const Json::Value& tunnels = root["result"];
+
+				vector<string> members = tunnels.getMemberNames();
+
+				for (string& member : members)
+				{
+					// Is this a valid tunnel?
+					if (tunnels[member].isMember(".type") &&
+						tunnels[member][".type"].asString() == "service" &&
+						tunnels[member].isMember("accept_port") &&
+						!tunnels[member]["accept_port"].empty() &&
+						tunnels[member].isMember("connect") &&
+						!tunnels[member]["connect"].empty() &&
+						tunnels[member].isMember("client") &&
+						tunnels[member]["client"].asString() == "yes")
+					{
+						connect = tunnels[member]["connect"].asString();
+						transform(connect.begin(), connect.end(), connect.begin(), ::tolower);
+						port = tunnels[member]["accept_port"].isInt();
+
+						if (_tunnels.count(connect) == 0)
+						{
+							_tunnels.insert(pair<string, int>(connect, port));
+
+							if (port > _tunnelPort)
+							{
+								port = _tunnelPort;
+							}
+						}
+					}
+				}
+
+				_tunnelsInited = true;
+				AddOrGetTunnel();
+			}
+			else
+			{
+				// TODO: error parsing response
+			}
+		}
+		else
+		{
+			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+		}
+	}
+	else
+	{
+		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+	}
+}
+
+void OpenWRT::GetTunnel(string connect, function<void(string, int)> onComplete)
+{
+	transform(connect.begin(), connect.end(), connect.begin(), ::tolower);
+	connect += ":443";
+	_tunnelConnect = connect;
+	_onAddTunnelComplete = onComplete;
+
+	if (!_tunnelsInited)
+	{
+		InitStunnel();
+	}
+	else
+	{
+		AddOrGetTunnel();
+	}
+}
+
+void OpenWRT::AddOrGetTunnel()
+{
+	if (_tunnels.count(_tunnelConnect) > 0)
+	{
+		// Already in cache, return port
+		_onAddTunnelComplete(_tunnelConnect, _tunnels[_tunnelConnect]);
+	}
+	else
+	{
+		// Not in cache, so add to stunnel
+		Comms::Http.Post(
+			"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+			"{ \"id\": 1, \"method\": \"add\", \"params\": [ \"stunnel\", \"service\" ] }",
+			std::bind(&OpenWRT::SetTunnelClient, this, _1));
+	}
+}
+
+void OpenWRT::SetTunnelClient(HttpResponse response)
+{
+	if (response.Success)
+	{
+		if (response.StatusCode == 200)
+		{
+			Json::Value root;
+			Json::Reader reader;
+			string connect;
+			bool parseSuccess = reader.parse(response.Content.c_str(), root);
+
+			if (parseSuccess)
+			{
+				if (root.isMember("error") && !root["error"].empty())
+				{
+					// TODO DoError("GetConnectedNetwork: " + root["error"]["message"].asString());
+					return;
+				}
+
+				_tunnelId = root["result"].asString();
+
+				Comms::Http.Post(
+					"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+					"{ \"id\": 1, \"method\": \"set\", \"params\": [ \"stunnel\", \"" + _tunnelId + "\", \"client\", \"yes\" ] }",
+					std::bind(&OpenWRT::SetTunnelPort, this, _1));
+
+			}
+			else
+			{
+				// TODO: error parsing response
+			}
+		}
+		else
+		{
+			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+		}
+	}
+	else
+	{
+		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+	}
+}
+
+void OpenWRT::SetTunnelPort(HttpResponse response)
+{
+	if (response.Success)
+	{
+		if (response.StatusCode == 200)
+		{
+			_tunnelPort++;
+
+			Comms::Http.Post(
+				"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+				"{ \"id\": 1, \"method\": \"set\", \"params\": [ \"stunnel\", \"" + _tunnelId + "\", \"accept_port\", \"" + to_string(_tunnelPort) + "\" ] }",
+				std::bind(&OpenWRT::SetTunnelConnect, this, _1));
+
+		}
+		else
+		{
+			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+		}
+	}
+	else
+	{
+		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+	}
+}
+
+void OpenWRT::SetTunnelConnect(HttpResponse response)
+{
+	if (response.Success)
+	{
+		if (response.StatusCode == 200)
+		{
+			Comms::Http.Post(
+				"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+				"{ \"id\": 1, \"method\": \"set\", \"params\": [ \"stunnel\", \"" + _tunnelId + "\", \"connect\", \"" + _tunnelConnect + "\" ] }",
+				std::bind(&OpenWRT::CommitTunnel, this, _1));
+
+		}
+		else
+		{
+			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+		}
+	}
+	else
+	{
+		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+	}
+}
+
+void OpenWRT::CommitTunnel(HttpResponse response)
+{
+	if (response.Success)
+	{
+		if (response.StatusCode == 200)
+		{
+			_tunnelPort++;
+
+			Comms::Http.Post(
+				"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
+				"{ \"id\": 1, \"method\": \"commit\", \"params\": [ \"stunnel\" ] }",
+				std::bind(&OpenWRT::StunnelRestart, this, _1));
+
+		}
+		else
+		{
+			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+		}
+	}
+	else
+	{
+		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+	}
+}
+
+void OpenWRT::StunnelRestart(HttpResponse response)
+{
+	if (response.Success)
+	{
+		if (response.StatusCode == 200)
+		{
+			_tunnelPort++;
+
+			Comms::Http.Post(
+				"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/sys?auth=" + _token,
+				"{ \"id\": 1, \"method\": \"exec\", \"params\": [ \"/etc/init.d/stunnel restart\" ] }",
+				std::bind(&OpenWRT::AddTunnelToCache, this, _1));
+
+		}
+		else
+		{
+			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+		}
+	}
+	else
+	{
+		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+	}
+}
+
+void OpenWRT::AddTunnelToCache(HttpResponse response)
+{
+	if (response.Success)
+	{
+		if (response.StatusCode == 200)
+		{
+			if (_tunnels.count(_tunnelConnect) == 0)
+			{
+				_tunnels.insert(pair<string, int>(_tunnelConnect, _tunnelPort));
+				_onAddTunnelComplete(_tunnelConnect, _tunnelPort);
+			}
+		}
+		else
+		{
+			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+		}
+	}
+	else
+	{
+		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
 	}
 }
 

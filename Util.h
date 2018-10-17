@@ -14,6 +14,7 @@ class Util
 		static unsigned char* CtoPStr(char *s);
 		static unsigned char* StrToPStr(string str);
 		static void Debug(string msg);
+		static void DebugClient(string msg);
 		static void FrameDefaultButton(DialogPtr dialog, short itemNo, bool active);
 		static bool IsControlHilited(DialogPtr dialog, short itemNo);
 		static string UrlEncode(string &value);

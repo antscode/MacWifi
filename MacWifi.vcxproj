@@ -108,6 +108,7 @@ xcopy *.APPL "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\Basilis
   <ItemGroup>
     <ClInclude Include="Comms.h" />
     <ClInclude Include="MacWifi.h" />
+    <ClInclude Include="MacWifiLib.h" />
     <ClInclude Include="Modules\OpenWRT.h" />
     <ClInclude Include="Prefs.h" />
     <ClInclude Include="ShowInitIcon.h" />
@@ -115,11 +116,14 @@ xcopy *.APPL "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\Basilis
     <ClInclude Include="Modules\WifiModule.h" />
     <ClInclude Include="Modules\VM300.h" />
     <ClInclude Include="Util.h" />
+    <ClInclude Include="WifiEvents.h" />
     <ClInclude Include="WifiShared.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Comms.cpp" />
     <ClCompile Include="MacWifi.cpp" />
+    <ClCompile Include="MacWifiLib.cpp" />
+    <ClCompile Include="MacWifiTest.cpp" />
     <ClCompile Include="Modules\OpenWRT.cpp" />
     <ClCompile Include="Modules\WifiModule.cpp" />
     <ClCompile Include="Prefs.cpp" />
@@ -130,6 +134,7 @@ xcopy *.APPL "C:\Users\AnthonySuper\OneDrive\Documents\Personal\Mac\Apps\Basilis
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+    <None Include="MacWifiTest.r" />
     <None Include="README.md" />
     <None Include="resources.r" />
   </ItemGroup>
