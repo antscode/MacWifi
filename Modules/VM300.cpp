@@ -264,9 +264,14 @@ void VM300::RestartResponse(HttpResponse response)
 	}
 }
 
-void VM300::GetTunnel(string connect, function<void(string, int)> onComplete)
+void VM300::GetTunnel(string connect, function<void(GetTunnelResult)> onComplete)
 {
-	// TODO: Not implemented, return error
+	GetTunnelResult result;
+
+	result.Success = false;
+	result.ErrorMsg = "stunnel not supported by VM300 device.";
+
+	onComplete(result);
 }
 
 string VM300::GetWifiModeStr(WifiMode mode)

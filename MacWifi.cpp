@@ -202,25 +202,32 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 
 	AEGetParamPtr(appleEvent, kCallbackIdParam, typeInteger, &typeCode, &callbackId, sizeof(int), &actualSize);
 
-	_requestComplete = false;
-
-	// Initialise an SSL tunnel if required
-	InitTunnel(url);
-
-	if (method == "GET")
+	try
 	{
-		Comms::Http.Get(url, RequestComplete);
+		Uri uri(url);
+
+		_requestStatus = Init;
+		while (_requestStatus != Complete)
+		{
+			switch (_requestStatus)
+			{
+				case Init:
+					InitTunnel(uri);
+					break;
+
+				case Request:
+					DoRequest(method, uri, data);
+					break;
+			}
+
+			Comms::Http.ProcessRequests();
+		}
 	}
-	else if (method == "POST")
+	catch (const invalid_argument& e)
 	{
-		Comms::Http.Post(url, data, RequestComplete);
+		DoError("Invalid request uri.");
 	}
 
-	while (!_requestComplete)
-	{
-		Comms::Http.ProcessRequests();
-	}
-	
 	const char* cErrorMsg = _response.ErrorMsg.c_str();
 	const char* cContent = _response.Content.c_str();
 
@@ -233,27 +240,61 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 	return noErr;
 }
 
-void InitTunnel(string requestUri)
+void InitTunnel(Uri uri)
 {
-	try
+	if (uri.Scheme == "https")
 	{
-		Uri uri(requestUri);
+		_wifiModule->GetTunnel(uri.Host, InitTunnelComplete);
+	}
+	else
+	{
+		_requestStatus = Request;
+	}
+}
 
-		if (uri.Scheme == "https")
-		{
-			//_wifiModule->GetTunnel(uri.Host, function<void(string, int)> onComplete));
-		}
-	}
-	catch (const invalid_argument& e)
+void InitTunnelComplete(GetTunnelResult result)
+{
+	if (result.Success)
 	{
-		// TODO: handle error
+		Comms::Http.SetStunnel(result.Host, result.Port);
+		_requestStatus = Request;
 	}
+	else
+	{
+		DoError(result.ErrorMsg);
+	}
+}
+
+void DoRequest(string method, Uri uri, string data)
+{
+	if (method == "GET")
+	{
+		Comms::Http.Get(uri, RequestComplete);
+	}
+	else if (method == "POST")
+	{
+		Comms::Http.Post(uri, data, RequestComplete);
+	}
+
+	_requestStatus = Processing;
 }
 
 void RequestComplete(HttpResponse response)
 {
-	_requestComplete = true;
+	_requestStatus = Complete;
 	_response = response;
+}
+
+void DoError(string errorMsg)
+{
+	HttpResponse response;
+
+	response.Success = false;
+	response.StatusCode = -1;
+	response.ErrorMsg = errorMsg;
+
+	_response = response;
+	_requestStatus = Complete;
 }
 
 pascal OSErr Quit(AppleEvent* appleEvent, AppleEvent* reply, long refCon)

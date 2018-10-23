@@ -11,7 +11,7 @@ class OpenWRT : public WifiModule
 public:
 	virtual void GetNetworks();
 	virtual void Connect(string name, string id, WifiMode mode, WifiEncryption encryption, string pwd);
-	virtual void GetTunnel(string connect, function<void(string, int)> onComplete);
+	virtual void GetTunnel(string connect, function<void(GetTunnelResult)> onComplete);
 
 private:
 	std::function<void()> _onLoginComplete;
@@ -28,7 +28,7 @@ private:
 	string _tunnelId;
 	string _tunnelConnect;
 	int _tunnelPort;
-	function<void(string, int)> _onAddTunnelComplete;
+	function<void(GetTunnelResult)> _onAddTunnelComplete;
 
 	void Login(std::function<void()> onComplete);
 	void LoginResponse(HttpResponse response);
@@ -56,6 +56,7 @@ private:
 	void CommitTunnel(HttpResponse response);
 	void StunnelRestart(HttpResponse response);
 	void AddTunnelToCache(HttpResponse response);
+	void TunnelError(string errorMsg);
 
 	WifiMode GetWifiMode(const Json::Value& mode);
 	string GetEncryptionStr(WifiMode mode);

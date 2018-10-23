@@ -349,7 +349,7 @@ void OpenWRT::PopulateTunnelCache(HttpResponse response)
 			{
 				if (root.isMember("error") && !root["error"].empty())
 				{
-					// TODO DoError("GetConnectedNetwork: " + root["error"]["message"].asString());
+					TunnelError("PopulateTunnelCache: " + root["error"]["message"].asString());
 					return;
 				}
 
@@ -390,21 +390,21 @@ void OpenWRT::PopulateTunnelCache(HttpResponse response)
 			}
 			else
 			{
-				// TODO: error parsing response
+				TunnelError("PopulateTunnelCache: Error parsing response.");
 			}
 		}
 		else
 		{
-			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+			TunnelError("PopulateTunnelCache: " + to_string(response.StatusCode) + " status returned.");
 		}
 	}
 	else
 	{
-		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+		TunnelError("PopulateTunnelCache: " + response.ErrorMsg);
 	}
 }
 
-void OpenWRT::GetTunnel(string connect, function<void(string, int)> onComplete)
+void OpenWRT::GetTunnel(string connect, function<void(GetTunnelResult)> onComplete)
 {
 	transform(connect.begin(), connect.end(), connect.begin(), ::tolower);
 	connect += ":443";
@@ -426,7 +426,13 @@ void OpenWRT::AddOrGetTunnel()
 	if (_tunnels.count(_tunnelConnect) > 0)
 	{
 		// Already in cache, return port
-		_onAddTunnelComplete(_tunnelConnect, _tunnels[_tunnelConnect]);
+		GetTunnelResult result;
+
+		result.Success = true;
+		result.Host = _tunnelConnect;
+		result.Port = _tunnels[_tunnelConnect];
+
+		_onAddTunnelComplete(result);
 	}
 	else
 	{
@@ -453,7 +459,7 @@ void OpenWRT::SetTunnelClient(HttpResponse response)
 			{
 				if (root.isMember("error") && !root["error"].empty())
 				{
-					// TODO DoError("GetConnectedNetwork: " + root["error"]["message"].asString());
+					TunnelError("SetTunnelClient: " + root["error"]["message"].asString());
 					return;
 				}
 
@@ -467,17 +473,17 @@ void OpenWRT::SetTunnelClient(HttpResponse response)
 			}
 			else
 			{
-				// TODO: error parsing response
+				TunnelError("SetTunnelClient: Error parsing response.");
 			}
 		}
 		else
 		{
-			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+			TunnelError("SetTunnelClient: " + to_string(response.StatusCode) + " status returned.");
 		}
 	}
 	else
 	{
-		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+		TunnelError("SetTunnelClient: " + response.ErrorMsg);
 	}
 }
 
@@ -497,12 +503,12 @@ void OpenWRT::SetTunnelPort(HttpResponse response)
 		}
 		else
 		{
-			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+			TunnelError("SetTunnelPort: " + to_string(response.StatusCode) + " status returned.");
 		}
 	}
 	else
 	{
-		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+		TunnelError("SetTunnelPort: " + response.ErrorMsg);
 	}
 }
 
@@ -520,12 +526,12 @@ void OpenWRT::SetTunnelConnect(HttpResponse response)
 		}
 		else
 		{
-			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+			TunnelError("SetTunnelConnect: " + to_string(response.StatusCode) + " status returned.");
 		}
 	}
 	else
 	{
-		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+		TunnelError("SetTunnelConnect: " + response.ErrorMsg);
 	}
 }
 
@@ -545,12 +551,12 @@ void OpenWRT::CommitTunnel(HttpResponse response)
 		}
 		else
 		{
-			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+			TunnelError("CommitTunnel: " + to_string(response.StatusCode) + " status returned.");
 		}
 	}
 	else
 	{
-		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+		TunnelError("CommitTunnel: " + response.ErrorMsg);
 	}
 }
 
@@ -570,12 +576,12 @@ void OpenWRT::StunnelRestart(HttpResponse response)
 		}
 		else
 		{
-			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+			TunnelError("StunnelRestart: " + to_string(response.StatusCode) + " status returned.");
 		}
 	}
 	else
 	{
-		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+		TunnelError("StunnelRestart: " + response.ErrorMsg);
 	}
 }
 
@@ -588,18 +594,35 @@ void OpenWRT::AddTunnelToCache(HttpResponse response)
 			if (_tunnels.count(_tunnelConnect) == 0)
 			{
 				_tunnels.insert(pair<string, int>(_tunnelConnect, _tunnelPort));
-				_onAddTunnelComplete(_tunnelConnect, _tunnelPort);
+
+				GetTunnelResult result;
+
+				result.Success = true;
+				result.Host = _tunnelConnect;
+				result.Port = _tunnelPort;
+
+				_onAddTunnelComplete(result);
 			}
 		}
 		else
 		{
-			// TODO DoError("ReloadRequest: " + std::to_string(response.StatusCode) + " status returned.");
+			TunnelError("AddTunnelToCache: " + to_string(response.StatusCode) + " status returned.");
 		}
 	}
 	else
 	{
-		// TODO DoError("ReloadRequest: " + response.ErrorMsg);
+		TunnelError("AddTunnelToCache: " + response.ErrorMsg);
 	}
+}
+
+void OpenWRT::TunnelError(string errorMsg)
+{
+	GetTunnelResult result;
+
+	result.Success = false;
+	result.ErrorMsg = errorMsg;
+
+	_onAddTunnelComplete(result);
 }
 
 WifiMode OpenWRT::GetWifiMode(const Json::Value& encryption)

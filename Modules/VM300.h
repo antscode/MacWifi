@@ -10,7 +10,7 @@ class VM300 : public WifiModule
 	public:
 		virtual void GetNetworks();
 		virtual void Connect(string name, string id, WifiMode mode, WifiEncryption encryption, string pwd);
-		virtual void GetTunnel(string connect, function<void(string, int)> onComplete);
+		virtual void GetTunnel(string connect, function<void(GetTunnelResult)> onComplete);
 
 	private:
 		std::function<void()> _onLoginComplete;
