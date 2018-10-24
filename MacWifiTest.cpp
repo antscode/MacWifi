@@ -5,14 +5,13 @@
 
 #define arraylen(arr) ((int) (sizeof (arr) / sizeof (arr)[0]))
 
-string _requests[2][2] = 
+string _requests[5][2] = 
 {
 	{ "Small http request", "http://httpbin.org/status/418" },
-	//{ "Big http request", "http://httpbin.org/html" },
-	//{ "302 redirect", "http://httpbin.org/redirect-to?url=/status/418" },
-	{ "Small https request", "https://httpbin.org/status/418" }//,
-	//{ "Big https request", "https://httpbin.org/html" },
-	//{ "302 redirect (https)", "https://httpbin.org/redirect-to?url=/status/418" }
+	{ "Small https request", "https://httpbin.org/status/418" },
+	{ "Facebook", "https://facebook.com" },
+	{ "Google", "https://google.com" },
+	{ "Apple", "https://apple.com" }
 };
 
 bool _doRequest = true;

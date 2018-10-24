@@ -178,6 +178,8 @@ void SavePrefs()
 	_prefs.Data["username"] = _sharedDataPtr->Username;
 	_prefs.Data["password"] = _sharedDataPtr->Password;
 	_prefs.Save();
+
+	GetWifiModule();
 }
 
 pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long refCon)
@@ -242,9 +244,12 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 
 void InitTunnel(Uri uri)
 {
+	Comms::Http.SetStunnel("", 0);
+
 	if (uri.Scheme == "https")
 	{
 		_wifiModule->GetTunnel(uri.Host, InitTunnelComplete);
+		_requestStatus = Processing;
 	}
 	else
 	{

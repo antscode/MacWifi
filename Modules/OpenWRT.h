@@ -28,7 +28,7 @@ private:
 	string _tunnelId;
 	string _tunnelConnect;
 	int _tunnelPort;
-	function<void(GetTunnelResult)> _onAddTunnelComplete;
+	function<void(GetTunnelResult)> _onAddTunnelComplete = 0;
 
 	void Login(std::function<void()> onComplete);
 	void LoginResponse(HttpResponse response);

@@ -322,10 +322,27 @@ void OpenWRT::ReloadResponse(HttpResponse response)
 	}
 }
 
+void OpenWRT::GetTunnel(string connect, function<void(GetTunnelResult)> onComplete)
+{
+	transform(connect.begin(), connect.end(), connect.begin(), ::tolower);
+	connect += ":443";
+	_tunnelConnect = connect;
+	_onAddTunnelComplete = onComplete;
+
+	if (!_tunnelsInited)
+	{
+		Login(bind(&OpenWRT::InitStunnel, this));
+	}
+	else
+	{
+		Login(bind(&OpenWRT::AddOrGetTunnel, this));
+	}
+}
+
 void OpenWRT::InitStunnel()
 {
 	_tunnels.clear();
-	_tunnelPort = 0;
+	_tunnelPort = 2000;
 
 	Comms::Http.Post(
 		"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
@@ -371,7 +388,7 @@ void OpenWRT::PopulateTunnelCache(HttpResponse response)
 					{
 						connect = tunnels[member]["connect"].asString();
 						transform(connect.begin(), connect.end(), connect.begin(), ::tolower);
-						port = tunnels[member]["accept_port"].isInt();
+						port = stoi(tunnels[member]["accept_port"].asString());
 
 						if (_tunnels.count(connect) == 0)
 						{
@@ -379,7 +396,7 @@ void OpenWRT::PopulateTunnelCache(HttpResponse response)
 
 							if (port > _tunnelPort)
 							{
-								port = _tunnelPort;
+								_tunnelPort = port;
 							}
 						}
 					}
@@ -404,23 +421,6 @@ void OpenWRT::PopulateTunnelCache(HttpResponse response)
 	}
 }
 
-void OpenWRT::GetTunnel(string connect, function<void(GetTunnelResult)> onComplete)
-{
-	transform(connect.begin(), connect.end(), connect.begin(), ::tolower);
-	connect += ":443";
-	_tunnelConnect = connect;
-	_onAddTunnelComplete = onComplete;
-
-	if (!_tunnelsInited)
-	{
-		InitStunnel();
-	}
-	else
-	{
-		AddOrGetTunnel();
-	}
-}
-
 void OpenWRT::AddOrGetTunnel()
 {
 	if (_tunnels.count(_tunnelConnect) > 0)
@@ -429,7 +429,7 @@ void OpenWRT::AddOrGetTunnel()
 		GetTunnelResult result;
 
 		result.Success = true;
-		result.Host = _tunnelConnect;
+		result.Host = string(WifiDataPtr->Hostname);
 		result.Port = _tunnels[_tunnelConnect];
 
 		_onAddTunnelComplete(result);
@@ -541,13 +541,10 @@ void OpenWRT::CommitTunnel(HttpResponse response)
 	{
 		if (response.StatusCode == 200)
 		{
-			_tunnelPort++;
-
 			Comms::Http.Post(
 				"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
 				"{ \"id\": 1, \"method\": \"commit\", \"params\": [ \"stunnel\" ] }",
 				std::bind(&OpenWRT::StunnelRestart, this, _1));
-
 		}
 		else
 		{
@@ -566,13 +563,10 @@ void OpenWRT::StunnelRestart(HttpResponse response)
 	{
 		if (response.StatusCode == 200)
 		{
-			_tunnelPort++;
-
 			Comms::Http.Post(
 				"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/sys?auth=" + _token,
 				"{ \"id\": 1, \"method\": \"exec\", \"params\": [ \"/etc/init.d/stunnel restart\" ] }",
 				std::bind(&OpenWRT::AddTunnelToCache, this, _1));
-
 		}
 		else
 		{
@@ -598,7 +592,7 @@ void OpenWRT::AddTunnelToCache(HttpResponse response)
 				GetTunnelResult result;
 
 				result.Success = true;
-				result.Host = _tunnelConnect;
+				result.Host = string(WifiDataPtr->Hostname);
 				result.Port = _tunnelPort;
 
 				_onAddTunnelComplete(result);
