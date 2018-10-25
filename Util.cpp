@@ -3,6 +3,8 @@
 #include <sstream>
 #include <string.h>
 #include <stdio.h>
+#include <Timer.h>
+#include <Threads.h>
 #include "Util.h"
 
 #define kTwoPower32 (4294967296.0)      /* 2^32 */
@@ -168,4 +170,20 @@ double Util::MicrosecondToDouble(register const UnsignedWide *epochPtr)
 
 	result = (((double)epochPtr->hi) * kTwoPower32) + epochPtr->lo;
 	return (result);
+}
+
+void Util::Sleep(int seconds)
+{
+	const double waitTime = (seconds * 1000000);
+	UnsignedWide startTime, curTime, diff;
+	double timeDiff;
+
+	Microseconds(&startTime);
+
+	do
+	{
+		Microseconds(&curTime);
+		timeDiff = Util::MicrosecondToDouble(&curTime) - Util::MicrosecondToDouble(&startTime);
+		YieldToAnyThread();
+	} while (timeDiff < waitTime);
 }

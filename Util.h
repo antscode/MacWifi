@@ -19,6 +19,7 @@ class Util
 		static bool IsControlHilited(DialogPtr dialog, short itemNo);
 		static string UrlEncode(string &value);
 		static double MicrosecondToDouble(register const UnsignedWide *epochPtr);
+		static void Sleep(int seconds);
 };
 
 #endif // _UTIL_

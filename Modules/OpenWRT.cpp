@@ -595,6 +595,9 @@ void OpenWRT::AddTunnelToCache(HttpResponse response)
 				result.Host = string(WifiDataPtr->Hostname);
 				result.Port = _tunnelPort;
 
+				// Give stunnel time to restart before issuing requests (1 sec)
+				Util::Sleep(1);
+
 				_onAddTunnelComplete(result);
 			}
 		}
