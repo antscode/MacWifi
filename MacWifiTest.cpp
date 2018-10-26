@@ -5,18 +5,18 @@
 
 #define arraylen(arr) ((int) (sizeof (arr) / sizeof (arr)[0]))
 
-string _requests[5][2] = 
+string _requests[4][2] = 
 {
 	{ "Small http request", "http://httpbin.org/status/418" },
 	{ "Small https request", "https://httpbin.org/status/418" },
 	{ "Facebook", "https://facebook.com" },
-	{ "Google", "https://google.com" },
-	{ "Apple", "https://apple.com" }
+	{ "Google", "https://google.com" }
 };
 
 bool _doRequest = true;
 int _curRequest = 0;
 MacWifiLib _wifiLib;
+Util _util;
 
 void DoRequest(string title, string url);
 void OnResponse(MacWifiResponse response);
@@ -64,6 +64,7 @@ void DoRequest(string title, string url)
 
 	printf("%s says:\n\n", url.c_str());
 
+	_util.StartTimer();
 	_wifiLib.Get(url, OnResponse);
 	_doRequest = false; 
 }
@@ -82,6 +83,9 @@ void OnResponse(MacWifiResponse response)
 	{
 		printf("ERROR: %s\n\n", response.ErrorMsg.c_str());
 	}
+
+	int timeTaken = _util.StopTimer();
+	printf("\n\nRequest took %dms.\n\n", timeTaken);
 
 	_curRequest++;
 	_doRequest = true;

@@ -20,6 +20,11 @@ class Util
 		static string UrlEncode(string &value);
 		static double MicrosecondToDouble(register const UnsignedWide *epochPtr);
 		static void Sleep(int seconds);
+		void StartTimer();
+		int StopTimer();
+
+	private:
+		UnsignedWide _startTime;
 };
 
 #endif // _UTIL_

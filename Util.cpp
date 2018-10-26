@@ -172,9 +172,9 @@ double Util::MicrosecondToDouble(register const UnsignedWide *epochPtr)
 	return (result);
 }
 
-void Util::Sleep(int seconds)
+void Util::Sleep(int milliSeconds)
 {
-	const double waitTime = (seconds * 1000000);
+	const double waitTime = (milliSeconds * 1000);
 	UnsignedWide startTime, curTime, diff;
 	double timeDiff;
 
@@ -186,4 +186,20 @@ void Util::Sleep(int seconds)
 		timeDiff = Util::MicrosecondToDouble(&curTime) - Util::MicrosecondToDouble(&startTime);
 		YieldToAnyThread();
 	} while (timeDiff < waitTime);
+}
+
+void Util::StartTimer()
+{
+	Microseconds(&_startTime);
+}
+
+int Util::StopTimer()
+{
+	UnsignedWide curTime;
+	double timeDiff;
+
+	Microseconds(&curTime);
+	timeDiff = Util::MicrosecondToDouble(&curTime) - Util::MicrosecondToDouble(&_startTime);
+
+	return timeDiff / 1000; // As milliseconds
 }
