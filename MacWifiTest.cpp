@@ -71,6 +71,9 @@ void DoRequest(string title, string url)
 
 void OnResponse(MacWifiResponse response)
 {
+	int timeTaken = _util.StopTimer();
+	printf("\n\nRequest took %dms.\n\n", timeTaken);
+
 	printf("Status: %d\n\n", response.StatusCode);
 
 	if (response.Success)
@@ -83,9 +86,6 @@ void OnResponse(MacWifiResponse response)
 	{
 		printf("ERROR: %s\n\n", response.ErrorMsg.c_str());
 	}
-
-	int timeTaken = _util.StopTimer();
-	printf("\n\nRequest took %dms.\n\n", timeTaken);
 
 	_curRequest++;
 	_doRequest = true;

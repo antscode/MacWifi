@@ -140,13 +140,30 @@ void OpenWRT::GetNetworksResponse(HttpResponse response)
 				const Json::Value& networks = root["result"];
 
 				for (int i = 0; i < networks.size(); i++) {
-					Network network;
-					network.Name = networks[i]["ssid"].asString();
-					network.Id = networks[i]["bssid"].asString();
-					network.Encryption = GetEncryption(networks[i]["encryption"]);
-					network.Mode = GetWifiMode(networks[i]["encryption"]);
-					network.Connected = (network.Id == _currentSsid);
-					WifiDataPtr->Networks.push_back(network);
+					if (networks[i].isMember("ssid"))
+					{
+						Network network;
+						network.Name = networks[i]["ssid"].asString();
+						network.Id = networks[i]["bssid"].asString();
+						network.Encryption = GetEncryption(networks[i]["encryption"]);
+						network.Mode = GetWifiMode(networks[i]["encryption"]);
+						network.Connected = (network.Id == _currentSsid);
+
+						bool exists = false;
+						for (Network& net : WifiDataPtr->Networks)
+						{
+							if (net.Name == network.Name)
+							{
+								exists = true;
+								break;
+							}
+						}
+
+						if (!exists)
+						{
+							WifiDataPtr->Networks.push_back(network);
+						}
+					}
 				}
 
 				WifiDataPtr->Status = Idle;
@@ -628,7 +645,7 @@ WifiMode OpenWRT::GetWifiMode(const Json::Value& encryption)
 	if (encryption["wpa"].asInt() == 2)
 		return WPA2;
 
-	if (encryption["wpa"].asInt() < 2)
+	if (encryption["wpa"].asInt() == 1)
 		return WPA;
 
 	return Open;

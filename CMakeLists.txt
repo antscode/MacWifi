@@ -60,7 +60,7 @@ install(TARGETS MacWifiLib
     DESTINATION "lib"
 )
 
-install(FILES MacWifiLib.h
+install(FILES MacWifiLib.h WifiEvents.h
     DESTINATION "include/macwifi"
 )
 
