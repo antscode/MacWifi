@@ -3,9 +3,10 @@
 #include <algorithm>
 #include "OpenWRT.h"
 
-void OpenWRT::Login(std::function<void()> onComplete)
+void OpenWRT::Login(std::function<void()> onComplete, std::function<void(string)> onError)
 {
 	_onLoginComplete = onComplete;
+	_onLoginError = onError; 
 
 	Comms::Http.Post(
 		"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/auth",
@@ -27,7 +28,7 @@ void OpenWRT::LoginResponse(HttpResponse response)
 			{
 				if (root.isMember("error") && !root["error"].empty())
 				{
-					DoError("Login: " + root["error"]["message"].asString());
+					_onLoginError("Login: " + root["error"]["message"].asString());
 					return;
 				}
 
@@ -38,28 +39,28 @@ void OpenWRT::LoginResponse(HttpResponse response)
 				}
 				else
 				{
-					DoError("Login: No token in response.");
+					_onLoginError("Login: No token in response.");
 				}
 			}
 			else
 			{
-				DoError("Login: Error parsing response.");
+				_onLoginError("Login: Error parsing response.");
 			}
 		}
 		else
 		{
-			DoError("Login: " + std::to_string(response.StatusCode) + " status returned.");
+			_onLoginError("Login: " + std::to_string(response.StatusCode) + " status returned.");
 		}
 	}
 	else
 	{
-		DoError("Login: " + response.ErrorMsg);
+		_onLoginError("Login: " + response.ErrorMsg);
 	}
 }
 
 void OpenWRT::GetNetworks()
 {
-	Login(std::bind(&OpenWRT::GetConnectedNetworkRequest, this));
+	Login(std::bind(&OpenWRT::GetConnectedNetworkRequest, this), std::bind(&OpenWRT::DoError, this, _1));
 }
 
 void OpenWRT::GetConnectedNetworkRequest()
@@ -193,7 +194,7 @@ void OpenWRT::Connect(string name, string id, WifiMode mode, WifiEncryption encr
 	_encryption = encryption;
 	_pwd = pwd;
 
-	Login(std::bind(&OpenWRT::SetSsidRequest, this));
+	Login(std::bind(&OpenWRT::SetSsidRequest, this), std::bind(&OpenWRT::DoError, this, _1));
 }
 
 void OpenWRT::SetSsidRequest()
@@ -348,11 +349,11 @@ void OpenWRT::GetTunnel(string connect, function<void(GetTunnelResult)> onComple
 
 	if (!_tunnelsInited)
 	{
-		Login(bind(&OpenWRT::InitStunnel, this));
+		Login(bind(&OpenWRT::InitStunnel, this), bind(&OpenWRT::TunnelError, this, _1));
 	}
 	else
 	{
-		Login(bind(&OpenWRT::AddOrGetTunnel, this));
+		Login(bind(&OpenWRT::AddOrGetTunnel, this), bind(&OpenWRT::TunnelError, this, _1));
 	}
 }
 

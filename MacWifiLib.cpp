@@ -80,7 +80,7 @@ OSErr MacWifiLib::ProcessReply(AppleEvent* appleEvent)
 	DescType typeCode;
 
 	char cError[1000];
-	char cContent[5000];
+	char cContent[300000];
 
 	bool success;
 	int statusCode;

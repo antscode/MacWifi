@@ -15,6 +15,7 @@ public:
 
 private:
 	std::function<void()> _onLoginComplete;
+	std::function<void(string)> _onLoginError;
 	string _ssid;
 	string _bssid;
 	WifiMode _mode;
@@ -30,7 +31,7 @@ private:
 	int _tunnelPort;
 	function<void(GetTunnelResult)> _onAddTunnelComplete = 0;
 
-	void Login(std::function<void()> onComplete);
+	void Login(std::function<void()> onComplete, std::function<void(string)> onError);
 	void LoginResponse(HttpResponse response);
 
 	void GetConnectedNetworkRequest();

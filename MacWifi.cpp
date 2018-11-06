@@ -1,6 +1,7 @@
 #include <Events.h>
 #include <Resources.h>
 #include <string.h>
+#include <vector>
 #include "WifiShared.h"
 #include "MacWifi.h"
 #include "Prefs.h"
@@ -22,14 +23,14 @@ int main()
 	GetWifiModule();
 
 	while (_run)
-	{
+	{ 
 		if (WaitNextEvent(everyEvent, &event, 0, NULL))
 		{
 			switch (event.what)
 			{
 				case kHighLevelEvent:
 					AEProcessAppleEvent(&event);
-					break;
+					break; 
 			}
 		}
 		else
@@ -44,7 +45,7 @@ int main()
 					break;
 
 				case ConnectRequest:
-					_sharedDataPtr->Status = Connecting;
+					_sharedDataPtr->Status = Connecting; 
 					_sharedDataPtr->Error = false;
 
 					_wifiModule->Connect(
@@ -83,7 +84,7 @@ void GetSharedData()
 		_sharedDataPtr = (WifiData*)**memHandle;
 
 		RemoveResource((Handle)memHandle);
-		UpdateResFile(CurResFile());
+		UpdateResFile(CurResFile()); 
 		ReleaseResource((Handle)memHandle);
 	}
 }
@@ -231,13 +232,14 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 	}
 
 	const char* cErrorMsg = _response.ErrorMsg.c_str();
-	const char* cContent = _response.Content.c_str();
+	vector<char> v(_response.Content.begin(), _response.Content.end());
+	const char* cContent = &v[0];
 
 	AEPutParamPtr(reply, kCallbackIdParam, typeInteger, &callbackId, sizeof(int));
 	AEPutParamPtr(reply, kSuccessParam, typeBoolean, &_response.Success, sizeof(bool));
 	AEPutParamPtr(reply, kStatusCodeParam, typeInteger, &_response.StatusCode, sizeof(int));
 	AEPutParamPtr(reply, kErrorMsgParam, typeChar, cErrorMsg, strlen(cErrorMsg));
-	AEPutParamPtr(reply, kContentParam, typeChar, cContent, strlen(cContent));
+	AEPutParamPtr(reply, kContentParam, typeChar, cContent, _response.Content.size());
 
 	return noErr;
 }
@@ -248,8 +250,8 @@ void InitTunnel(Uri uri)
 
 	if (uri.Scheme == "https")
 	{
-		_wifiModule->GetTunnel(uri.Host, InitTunnelComplete);
 		_requestStatus = Processing;
+		_wifiModule->GetTunnel(uri.Host, InitTunnelComplete);
 	}
 	else
 	{
