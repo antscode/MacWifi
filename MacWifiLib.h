@@ -33,6 +33,7 @@ class MacWifiLib
 		void SendRequestEvent(string method, string uri, string content, function<void(MacWifiResponse)> onComplete);
 		void GetEventAddress(AEAddressDesc* address);
 		OSErr SendEvent(AppleEvent* appleEvent);
+		void GetParamAsString(AppleEvent* appleEvent, AEKeyword keyword, string &output);
 };
 
 #endif

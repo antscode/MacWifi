@@ -90,31 +90,32 @@ OSErr MacWifiLib::ProcessReply(AppleEvent* appleEvent)
 {
 	Size actualSize;
 	DescType typeCode;
-
-	char cError[1000];
-	char cContent[300000];
-
-	bool success;
-	int statusCode;
+	MacWifiResponse response;
 	int callbackId;
-	string errorMsg, content;
 
 	AEGetParamPtr(appleEvent, kCallbackIdParam, typeInteger, &typeCode, &callbackId, sizeof(int), &actualSize);
-	AEGetParamPtr(appleEvent, kSuccessParam, typeBoolean, &typeCode, &success, sizeof(bool), &actualSize);
-	AEGetParamPtr(appleEvent, kStatusCodeParam, typeInteger, &typeCode, &statusCode, sizeof(int), &actualSize);
-	AEGetParamPtr(appleEvent, kErrorMsgParam, typeChar, &typeCode, cError, sizeof(cError), &actualSize);
-	errorMsg.assign(cError, actualSize);
-
-	AEGetParamPtr(appleEvent, kContentParam, typeChar, &typeCode, cContent, sizeof(cContent), &actualSize);
-	content.assign(cContent, actualSize);
-
-	MacWifiResponse response;
-
-	response.Success = success;
-	response.StatusCode = statusCode;
-	response.ErrorMsg = errorMsg;
-	response.Content = content;
+	AEGetParamPtr(appleEvent, kSuccessParam, typeBoolean, &typeCode, &response.Success, sizeof(bool), &actualSize);
+	AEGetParamPtr(appleEvent, kStatusCodeParam, typeInteger, &typeCode, &response.StatusCode, sizeof(int), &actualSize);
+	GetParamAsString(appleEvent, kErrorMsgParam, response.ErrorMsg);
+	GetParamAsString(appleEvent, kContentParam, response.Content);
 
 	_callbacks[callbackId](response);
-	//_callbacks.erase(callbackId);
+	_callbacks[callbackId] = 0;
+}
+
+void MacWifiLib::GetParamAsString(AppleEvent* appleEvent, AEKeyword keyword, string &output)
+{
+	DescType typeCode;
+	Size sizeOfParam, actualSize;
+	char* buffer;
+	string retVal;
+
+	AESizeOfParam(appleEvent, keyword, &typeCode, &sizeOfParam);
+	buffer = (char*)NewPtr(sizeOfParam + 2);
+
+	AEGetParamPtr(appleEvent, keyword, typeChar, &typeCode, buffer, sizeOfParam + 1, &actualSize);
+	buffer[actualSize] = '\0';
+
+	output.assign(buffer, actualSize);
+	DisposePtr(buffer);
 }

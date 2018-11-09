@@ -187,26 +187,13 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 {
 	Size actualSize;
 	DescType typeCode;
-
-	char cMethod[255];
-	char cUri[255];
-	char cAuthorization[1000];
-	char cData[10000];
-	int callbackId;
 	string method, url, authorization, data;
+	int callbackId;
 
-	AEGetParamPtr(appleEvent, kMethodParam, typeChar, &typeCode, cMethod, sizeof(cMethod), &actualSize);
-	method.assign(cMethod, actualSize);
-
-	AEGetParamPtr(appleEvent, kUriParam, typeChar, &typeCode, cUri, sizeof(cUri), &actualSize);
-	url.assign(cUri, actualSize);
-
-	AEGetParamPtr(appleEvent, kAuthorizationParam, typeChar, &typeCode, cAuthorization, sizeof(cAuthorization), &actualSize);
-	authorization.assign(cAuthorization, actualSize);
-
-	AEGetParamPtr(appleEvent, kDataParam, typeChar, &typeCode, cData, sizeof(cData), &actualSize);
-	data.assign(cData, actualSize);
-
+	GetParamAsString(appleEvent, kMethodParam, method);
+	GetParamAsString(appleEvent, kUriParam, url);
+	GetParamAsString(appleEvent, kAuthorizationParam, authorization);
+	GetParamAsString(appleEvent, kDataParam, data);
 	AEGetParamPtr(appleEvent, kCallbackIdParam, typeInteger, &typeCode, &callbackId, sizeof(int), &actualSize);
 
 	try
@@ -246,6 +233,23 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 	AEPutParamPtr(reply, kContentParam, typeChar, cContent, _response.Content.size());
 
 	return noErr;
+}
+
+void GetParamAsString(AppleEvent* appleEvent, AEKeyword keyword, string &output)
+{
+	DescType typeCode;
+	Size sizeOfParam, actualSize;
+	char* buffer;
+	string retVal;
+
+	AESizeOfParam(appleEvent, keyword, &typeCode, &sizeOfParam);
+	buffer = (char*)NewPtr(sizeOfParam + 2);
+
+	AEGetParamPtr(appleEvent, keyword, typeChar, &typeCode, buffer, sizeOfParam + 1, &actualSize);
+	buffer[actualSize] = '\0';
+
+	output.assign(buffer, actualSize);
+	DisposePtr(buffer);
 }
 
 void InitTunnel(Uri uri)

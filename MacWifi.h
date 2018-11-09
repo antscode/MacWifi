@@ -27,6 +27,7 @@ void InitTunnelComplete(GetTunnelResult result);
 void DoRequest(string method, Uri uri, string authorization, string data);
 void RequestComplete(HttpResponse response);
 void DoError(string errorMsg);
+void GetParamAsString(AppleEvent* appleEvent, AEKeyword keyword, string &output);
 
 RequestStatus _requestStatus;
 HttpResponse _response;
