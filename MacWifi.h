@@ -24,7 +24,7 @@ void Restart();
 void SavePrefs();
 void InitTunnel(Uri uri);
 void InitTunnelComplete(GetTunnelResult result);
-void DoRequest(string method, Uri uri, string data);
+void DoRequest(string method, Uri uri, string authorization, string data);
 void RequestComplete(HttpResponse response);
 void DoError(string errorMsg);
 

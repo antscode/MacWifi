@@ -2,6 +2,11 @@
 #include "MacWifiLib.h"
 #include "Util.h"
 
+MacWifiLib::MacWifiLib()
+{
+	_authorization = "";
+}
+
 void MacWifiLib::Get(string requestUri, function<void(MacWifiResponse)> onComplete)
 {
 	SendRequestEvent("GET", requestUri, "", onComplete);
@@ -30,6 +35,7 @@ void MacWifiLib::SendRequestEvent(string method, string uri, string content, fun
 	const char* cMethod = method.c_str();
 	const char* cUri = uri.c_str();
 	const char* cContent = content.c_str();
+	const char* cAuthorization = _authorization.c_str();
 
 	int callbackIndex = _callbacks.size();
 	_callbacks.insert(pair<int, function<void(MacWifiResponse)>>(callbackIndex, onComplete));
@@ -37,6 +43,7 @@ void MacWifiLib::SendRequestEvent(string method, string uri, string content, fun
 	AEPutParamPtr(&appleEvent, kMethodParam, typeChar, cMethod, strlen(cMethod));
 	AEPutParamPtr(&appleEvent, kUriParam, typeChar, cUri, strlen(cUri));
 	AEPutParamPtr(&appleEvent, kDataParam, typeChar, cContent, strlen(cContent));
+	AEPutParamPtr(&appleEvent, kAuthorizationParam, typeChar, cAuthorization, strlen(cAuthorization));
 	AEPutParamPtr(&appleEvent, kCallbackIdParam, typeInteger, &callbackIndex, sizeof(int));
 
 	OSErr err = SendEvent(&appleEvent);
@@ -48,6 +55,11 @@ void MacWifiLib::SendRequestEvent(string method, string uri, string content, fun
 		response.ErrorMsg = "Cound not send event due to error " + to_string(err);
 		onComplete(response);
 	}
+}
+
+void MacWifiLib::SetAuthorization(string authorization)
+{
+	_authorization = authorization;
 }
 
 void MacWifiLib::GetEventAddress(AEAddressDesc* address)
@@ -104,5 +116,5 @@ OSErr MacWifiLib::ProcessReply(AppleEvent* appleEvent)
 	response.Content = content;
 
 	_callbacks[callbackId](response);
-	_callbacks.erase(callbackId);
+	//_callbacks.erase(callbackId);
 }

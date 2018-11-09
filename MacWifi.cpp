@@ -190,15 +190,19 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 
 	char cMethod[255];
 	char cUri[255];
-	char cData[1000];
+	char cAuthorization[1000];
+	char cData[10000];
 	int callbackId;
-	string method, url, data;
+	string method, url, authorization, data;
 
 	AEGetParamPtr(appleEvent, kMethodParam, typeChar, &typeCode, cMethod, sizeof(cMethod), &actualSize);
 	method.assign(cMethod, actualSize);
 
 	AEGetParamPtr(appleEvent, kUriParam, typeChar, &typeCode, cUri, sizeof(cUri), &actualSize);
 	url.assign(cUri, actualSize);
+
+	AEGetParamPtr(appleEvent, kAuthorizationParam, typeChar, &typeCode, cAuthorization, sizeof(cAuthorization), &actualSize);
+	authorization.assign(cAuthorization, actualSize);
 
 	AEGetParamPtr(appleEvent, kDataParam, typeChar, &typeCode, cData, sizeof(cData), &actualSize);
 	data.assign(cData, actualSize);
@@ -219,7 +223,7 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 					break;
 
 				case Request:
-					DoRequest(method, uri, data);
+					DoRequest(method, uri, authorization, data);
 					break;
 			}
 
@@ -272,8 +276,10 @@ void InitTunnelComplete(GetTunnelResult result)
 	}
 }
 
-void DoRequest(string method, Uri uri, string data)
+void DoRequest(string method, Uri uri, string authorization, string data)
 {
+	Comms::Http.SetAuthorization(authorization);
+
 	if (method == "GET")
 	{
 		Comms::Http.Get(uri, RequestComplete);
