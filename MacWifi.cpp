@@ -187,6 +187,7 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 {
 	Size actualSize;
 	DescType typeCode;
+	EventRecord event;
 	string method, url, authorization, data;
 	int callbackId;
 
@@ -203,6 +204,8 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 		_requestStatus = Init;
 		while (_requestStatus != Complete)
 		{
+			WaitNextEvent(everyEvent, &event, 0, NULL);
+
 			switch (_requestStatus)
 			{
 				case Init:
