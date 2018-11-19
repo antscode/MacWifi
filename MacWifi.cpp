@@ -2,6 +2,7 @@
 #include <Resources.h>
 #include <string.h>
 #include <vector>
+#include "iconv.hpp"
 #include "WifiShared.h"
 #include "MacWifi.h"
 #include "Prefs.h"
@@ -12,6 +13,7 @@
 WifiModule* _wifiModule;
 WifiData* _sharedDataPtr;
 Prefs _prefs;
+iconvpp::converter _conv("MACROMAN//TRANSLIT", "UTF-8", true, 1024);
 
 int main()
 {	
@@ -189,12 +191,14 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 	DescType typeCode;
 	EventRecord event;
 	string method, url, authorization, data;
+	bool utf8ToMacRoman;
 	int callbackId;
 
 	GetParamAsString(appleEvent, kMethodParam, method);
 	GetParamAsString(appleEvent, kUriParam, url);
 	GetParamAsString(appleEvent, kAuthorizationParam, authorization);
 	GetParamAsString(appleEvent, kDataParam, data);
+	AEGetParamPtr(appleEvent, kUtf8ToMacRomanParam, typeBoolean, &typeCode, &utf8ToMacRoman, sizeof(bool), &actualSize);
 	AEGetParamPtr(appleEvent, kCallbackIdParam, typeInteger, &typeCode, &callbackId, sizeof(int), &actualSize);
 
 	try
@@ -225,15 +229,26 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 		DoError("Invalid request uri.");
 	}
 
+	string content;
+
+	if (utf8ToMacRoman)
+	{
+		_conv.convert(_response.Content, content);
+	}
+	else
+	{
+		content = _response.Content;
+	}
+
 	const char* cErrorMsg = _response.ErrorMsg.c_str();
-	vector<char> v(_response.Content.begin(), _response.Content.end());
+	vector<char> v(content.begin(), content.end());
 	const char* cContent = &v[0];
 
 	AEPutParamPtr(reply, kCallbackIdParam, typeInteger, &callbackId, sizeof(int));
 	AEPutParamPtr(reply, kSuccessParam, typeBoolean, &_response.Success, sizeof(bool));
 	AEPutParamPtr(reply, kStatusCodeParam, typeInteger, &_response.StatusCode, sizeof(int));
 	AEPutParamPtr(reply, kErrorMsgParam, typeChar, cErrorMsg, strlen(cErrorMsg));
-	AEPutParamPtr(reply, kContentParam, typeChar, cContent, _response.Content.size());
+	AEPutParamPtr(reply, kContentParam, typeChar, cContent, content.size());
 
 	return noErr;
 }

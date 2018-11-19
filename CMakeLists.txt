@@ -45,7 +45,7 @@ add_application(MacWifi
 	CREATOR "MWFI"
 )
 
-target_link_libraries(MacWifi MacHTTP MacTCPHelper jsoncpp)
+target_link_libraries(MacWifi MacHTTP MacTCPHelper jsoncpp iconv charset)
 
 # again, add some options to make things smaller.
 set_target_properties(MacWifi PROPERTIES COMPILE_OPTIONS -ffunction-sections)

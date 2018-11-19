@@ -1,10 +1,14 @@
 #include <string.h>
+#include <cctype>
+#include <iomanip>
+#include <sstream>
 #include "MacWifiLib.h"
 #include "Util.h"
 
 MacWifiLib::MacWifiLib()
 {
 	_authorization = "";
+	_utf8ToMacRoman = true;
 }
 
 void MacWifiLib::Get(string requestUri, function<void(MacWifiResponse)> onComplete)
@@ -44,6 +48,7 @@ void MacWifiLib::SendRequestEvent(string method, string uri, string content, fun
 	AEPutParamPtr(&appleEvent, kUriParam, typeChar, cUri, strlen(cUri));
 	AEPutParamPtr(&appleEvent, kDataParam, typeChar, cContent, strlen(cContent));
 	AEPutParamPtr(&appleEvent, kAuthorizationParam, typeChar, cAuthorization, strlen(cAuthorization));
+	AEPutParamPtr(&appleEvent, kUtf8ToMacRomanParam, typeBoolean, &_utf8ToMacRoman, sizeof(bool));
 	AEPutParamPtr(&appleEvent, kCallbackIdParam, typeInteger, &callbackIndex, sizeof(int));
 
 	OSErr err = SendEvent(&appleEvent);
@@ -60,6 +65,11 @@ void MacWifiLib::SendRequestEvent(string method, string uri, string content, fun
 void MacWifiLib::SetAuthorization(string authorization)
 {
 	_authorization = authorization;
+}
+
+void MacWifiLib::Utf8ToMacRoman(bool enabled)
+{
+	_utf8ToMacRoman = enabled;
 }
 
 void MacWifiLib::GetEventAddress(AEAddressDesc* address)
@@ -118,4 +128,28 @@ void MacWifiLib::GetParamAsString(AppleEvent* appleEvent, AEKeyword keyword, str
 
 	output.assign(buffer, actualSize);
 	DisposePtr(buffer);
+}
+
+string MacWifiLib::Encode(const string &value)
+{
+	ostringstream escaped;
+	escaped.fill('0');
+	escaped << hex;
+
+	for (string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+		string::value_type c = (*i);
+
+		// Keep alphanumeric and other accepted characters intact
+		if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+			escaped << c;
+			continue;
+		}
+
+		// Any other characters are percent-encoded
+		escaped << uppercase;
+		escaped << '%' << setw(2) << int((unsigned char)c);
+		escaped << nouppercase;
+	}
+
+	return escaped.str();
 }

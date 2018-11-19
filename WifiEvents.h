@@ -21,5 +21,6 @@ enum {
 	kStatusCodeParam = FOUR_CHAR_CODE('stat'),
 	kErrorMsgParam = FOUR_CHAR_CODE('errm'),
 	kContentParam = FOUR_CHAR_CODE('cont'),
-	kAuthorizationParam = FOUR_CHAR_CODE('auth')
+	kAuthorizationParam = FOUR_CHAR_CODE('auth'),
+	kUtf8ToMacRomanParam = FOUR_CHAR_CODE('utmr')
 };

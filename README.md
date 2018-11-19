@@ -50,6 +50,7 @@ MacWifi requires Retro68 for compilation, and the following libraries:
 * [MacTCPHelper](https://github.com/antscode/MacTCPHelper)
 * [MacHTTP](https://github.com/antscode/MacHTTP)
 * [jsoncpp](https://github.com/open-source-parsers/jsoncpp)
+* [libiconv](https://github.com/LuaDist/libiconv)
 
 First build and install the above libraries. Note: When building MacHTTP, set HTTPS_ENABLED to OFF in CMakeLists.txt. 
 HTTPS is not required, and will cause linker errors if it's not disabled.
@@ -69,3 +70,4 @@ The MacWifi extension will be in the MacWifi-build directory as a bin file and d
 * System Menu INIT code based on "SysMenu" shell project by Matt Slot, circa 1995.
 * Password field based on code snippet by Phil Kearney, circa 1994.
 * Startup icon code by Peter Lewis, Jim Walker & François Pottier, 1994.
+* [iconvpp](https://github.com/unnonouno/iconvpp) C++ wrapper for iconv
