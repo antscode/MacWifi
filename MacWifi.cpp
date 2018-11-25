@@ -97,12 +97,12 @@ void GetPrefs()
 	memset(_sharedDataPtr->Username, 0, sizeof(_sharedDataPtr->Username));
 	memset(_sharedDataPtr->Password, 0, sizeof(_sharedDataPtr->Password));
 
-	if (_prefs.Data.isMember("device"))
+	if (_prefs.Data.Device > 0)
 	{
-		_sharedDataPtr->Device = _prefs.Data["device"].asInt();
-		strcpy(_sharedDataPtr->Hostname, _prefs.Data["hostname"].asCString());
-		strcpy(_sharedDataPtr->Username, _prefs.Data["username"].asCString());
-		strcpy(_sharedDataPtr->Password, _prefs.Data["password"].asCString());
+		_sharedDataPtr->Device = _prefs.Data.Device;
+		strcpy(_sharedDataPtr->Hostname, _prefs.Data.Hostname);
+		strcpy(_sharedDataPtr->Username, _prefs.Data.Username);
+		strcpy(_sharedDataPtr->Password, _prefs.Data.Password);
 	}
 	else
 	{
@@ -176,10 +176,10 @@ void Restart()
 
 void SavePrefs()
 {
-	_prefs.Data["device"] = _sharedDataPtr->Device;
-	_prefs.Data["hostname"] = _sharedDataPtr->Hostname;
-	_prefs.Data["username"] = _sharedDataPtr->Username;
-	_prefs.Data["password"] = _sharedDataPtr->Password;
+	_prefs.Data.Device = _sharedDataPtr->Device;
+	strcpy(_prefs.Data.Hostname, _sharedDataPtr->Hostname);
+	strcpy(_prefs.Data.Username, _sharedDataPtr->Username);
+	strcpy(_prefs.Data.Password, _sharedDataPtr->Password);
 	_prefs.Save();
 
 	GetWifiModule();
@@ -309,6 +309,10 @@ void DoRequest(string method, Uri uri, string authorization, string data)
 	else if (method == "POST")
 	{
 		Comms::Http.Post(uri, data, RequestComplete);
+	}
+	else if (method == "PUT")
+	{
+		Comms::Http.Put(uri, data, RequestComplete);
 	}
 
 	_requestStatus = Processing;

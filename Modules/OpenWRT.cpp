@@ -20,21 +20,21 @@ void OpenWRT::LoginResponse(HttpResponse response)
 	{
 		if (response.StatusCode == 200)
 		{
-			Json::Value root;
-			Json::Reader reader;
-			bool parseSuccess = reader.parse(response.Content.c_str(), root);
+			JsonAllocator allocator;
+			JsonValue root;
+			JsonParseStatus status = jsonParse((char*)response.Content.c_str(), root, allocator);
 
-			if (parseSuccess)
+			if (status == JSON_PARSE_OK)
 			{
-				if (root.isMember("error") && !root["error"].empty())
+				if (root("error") && root("error").child("message"))
 				{
-					_onLoginError("Login: " + root["error"]["message"].asString());
+					_onLoginError("Login: " + string(root("error").child("message").toString()));
 					return;
 				}
 
-				if (root.isMember("result") && !root["result"].empty())
+				if (root("result"))
 				{
-					_token = root["result"].asString();
+					_token = root("result").toString();
 					_onLoginComplete();
 				}
 				else
@@ -79,23 +79,23 @@ void OpenWRT::GetConnectedNetworkResponse(HttpResponse response)
 	{
 		if (response.StatusCode == 200)
 		{
-			Json::Value root;
-			Json::Reader reader;
-			bool parseSuccess = reader.parse(response.Content.c_str(), root);
+			JsonAllocator allocator;
+			JsonValue root;
+			JsonParseStatus status = jsonParse((char*)response.Content.c_str(), root, allocator);
 
-			if (parseSuccess)
+			if (status == JSON_PARSE_OK)
 			{
-				if (root.isMember("error") && !root["error"].empty())
+				if (root("error") && root("error").child("message"))
 				{
-					DoError("GetConnectedNetwork: " + root["error"]["message"].asString());
+					DoError("GetConnectedNetwork: " + string(root("error")("message").toString()));
 					return;
 				}
 
-				const Json::Value& network = root["result"];
+				JsonValue network = root("result");
 
-				if (network.isMember("bssid"))
+				if (network("bssid"))
 				{
-					_currentSsid = network["bssid"].asString();
+					_currentSsid = network("bssid").toString();
 				}
 			}
 			else
@@ -132,22 +132,26 @@ void OpenWRT::GetNetworksResponse(HttpResponse response)
 		{
 			WifiDataPtr->Networks.clear();
 
-			Json::Value root;
-			Json::Reader reader;
-			bool parseSuccess = reader.parse(response.Content.c_str(), root);
+			JsonAllocator allocator;
+			JsonValue root;
+			JsonParseStatus status = jsonParse((char*)response.Content.c_str(), root, allocator);
 
-			if (parseSuccess)
+			if (status == JSON_PARSE_OK)
 			{
-				const Json::Value& networks = root["result"];
+				JsonValue networks = root("result");
 
-				for (int i = 0; i < networks.size(); i++) {
-					if (networks[i].isMember("ssid"))
+				JsonIterator it = gason::begin(networks);
+				while (it.isValid()) 
+				{
+					JsonValue networkNode = it->value;
+
+					if (networkNode("ssid"))
 					{
 						Network network;
-						network.Name = networks[i]["ssid"].asString();
-						network.Id = networks[i]["bssid"].asString();
-						network.Encryption = GetEncryption(networks[i]["encryption"]);
-						network.Mode = GetWifiMode(networks[i]["encryption"]);
+						network.Name = networkNode("ssid").toString();
+						network.Id = networkNode("bssid").toString();
+						network.Encryption = GetEncryption(networkNode("encryption"));
+						network.Mode = GetWifiMode(networkNode("encryption"));
 						network.Connected = (network.Id == _currentSsid);
 
 						bool exists = false;
@@ -165,6 +169,8 @@ void OpenWRT::GetNetworksResponse(HttpResponse response)
 							WifiDataPtr->Networks.push_back(network);
 						}
 					}
+
+					it++;
 				}
 
 				WifiDataPtr->Status = Idle;
@@ -374,50 +380,55 @@ void OpenWRT::PopulateTunnelCache(HttpResponse response)
 	{
 		if (response.StatusCode == 200)
 		{
-			Json::Value root;
-			Json::Reader reader;
-			string connect;
+			JsonAllocator allocator;
+			JsonValue root;
+			string type, client, connect;
 			int port;
-			bool parseSuccess = reader.parse(response.Content.c_str(), root);
 
-			if (parseSuccess)
+			JsonParseStatus status = jsonParse((char*)response.Content.c_str(), root, allocator);
+
+			if (status == JSON_PARSE_OK)
 			{
-				if (root.isMember("error") && !root["error"].empty())
+				if (root("error") && root("error").child("message"))
 				{
-					TunnelError("PopulateTunnelCache: " + root["error"]["message"].asString());
+					TunnelError("PopulateTunnelCache: " + string(root("error").child("message").toString()));
 					return;
 				}
 
-				const Json::Value& tunnels = root["result"];
+				const JsonValue tunnels = root("result");
 
-				vector<string> members = tunnels.getMemberNames();
-
-				for (string& member : members)
+				JsonIterator it = gason::begin(tunnels);
+				while (it.isValid()) 
 				{
+					JsonValue tunnel = it->value;
+
 					// Is this a valid tunnel?
-					if (tunnels[member].isMember(".type") &&
-						tunnels[member][".type"].asString() == "service" &&
-						tunnels[member].isMember("accept_port") &&
-						!tunnels[member]["accept_port"].empty() &&
-						tunnels[member].isMember("connect") &&
-						!tunnels[member]["connect"].empty() &&
-						tunnels[member].isMember("client") &&
-						tunnels[member]["client"].asString() == "yes")
+					if (tunnel(".type").isString() &&
+						tunnel("accept_port").isString() &&
+						tunnel("connect").isString() &&
+						tunnel("client").isString())
 					{
-						connect = tunnels[member]["connect"].asString();
-						transform(connect.begin(), connect.end(), connect.begin(), ::tolower);
-						port = stoi(tunnels[member]["accept_port"].asString());
+						type = tunnel(".type").toString();
+						client = tunnel("client").toString();
 
-						if (_tunnels.count(connect) == 0)
+						if (type == "service" && client == "yes")
 						{
-							_tunnels.insert(pair<string, int>(connect, port));
+							connect = tunnel("connect").toString();
+							transform(connect.begin(), connect.end(), connect.begin(), ::tolower);
+							port = stoi(tunnel("accept_port").toString());
 
-							if (port > _tunnelPort)
+							if (_tunnels.count(connect) == 0)
 							{
-								_tunnelPort = port;
+								_tunnels.insert(pair<string, int>(connect, port));
+
+								if (port > _tunnelPort)
+								{
+									_tunnelPort = port;
+								}
 							}
 						}
 					}
+					it++;
 				}
 
 				_tunnelsInited = true;
@@ -468,20 +479,21 @@ void OpenWRT::SetTunnelClient(HttpResponse response)
 	{
 		if (response.StatusCode == 200)
 		{
-			Json::Value root;
-			Json::Reader reader;
+			JsonAllocator allocator;
+			JsonValue root;
 			string connect;
-			bool parseSuccess = reader.parse(response.Content.c_str(), root);
 
-			if (parseSuccess)
+			JsonParseStatus status = jsonParse((char*)response.Content.c_str(), root, allocator);
+
+			if (status == JSON_PARSE_OK)
 			{
-				if (root.isMember("error") && !root["error"].empty())
+				if (root("error") && root("error").child("message"))
 				{
-					TunnelError("SetTunnelClient: " + root["error"]["message"].asString());
+					TunnelError("SetTunnelClient: " + string(root("error").child("message").toString()));
 					return;
 				}
 
-				_tunnelId = root["result"].asString();
+				_tunnelId = root("result").toString();
 
 				Comms::Http.Post(
 					"http://" + string(WifiDataPtr->Hostname) + "/cgi-bin/luci/rpc/uci?auth=" + _token,
@@ -641,13 +653,20 @@ void OpenWRT::TunnelError(string errorMsg)
 	_onAddTunnelComplete(result);
 }
 
-WifiMode OpenWRT::GetWifiMode(const Json::Value& encryption)
+WifiMode OpenWRT::GetWifiMode(const JsonValue& encryption)
 {
-	if (encryption["wpa"].asInt() == 2)
-		return WPA2;
+	if (encryption("wpa").isNumber())
+	{
+		int wpaType = encryption("wpa").toInt();
 
-	if (encryption["wpa"].asInt() == 1)
-		return WPA;
+		switch (wpaType)
+		{
+			case 1:
+				return WPA;
+			case 2:
+				return WPA2;
+		}
+	}
 
 	return Open;
 }
@@ -667,9 +686,11 @@ string OpenWRT::GetEncryptionStr(WifiMode mode)
 	}
 }
 
-WifiEncryption OpenWRT::GetEncryption(const Json::Value& encryption)
+WifiEncryption OpenWRT::GetEncryption(const JsonValue& encryption)
 {
-	if (encryption["auth_suites"][0] == "PSK")
+	if (encryption("auth_suites").isArray() &&
+		encryption("auth_suites")[0].isString() &&
+		encryption("auth_suites")[0].toString() == "PSK")
 		return AES;
 
 	return None;

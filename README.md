@@ -49,7 +49,7 @@ MacWifi requires Retro68 for compilation, and the following libraries:
 
 * [MacTCPHelper](https://github.com/antscode/MacTCPHelper)
 * [MacHTTP](https://github.com/antscode/MacHTTP)
-* [jsoncpp](https://github.com/open-source-parsers/jsoncpp)
+* [gason++](https://github.com/antscode/gason--)
 * [libiconv](https://github.com/LuaDist/libiconv)
 
 First build and install the above libraries. Note: When building MacHTTP, set HTTPS_ENABLED to OFF in CMakeLists.txt. 

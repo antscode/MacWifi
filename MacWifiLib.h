@@ -23,6 +23,7 @@ class MacWifiLib
 		MacWifiLib();
 		void Get(string requestUri, function<void(MacWifiResponse)> onComplete);
 		void Post(string requestUri, string content, function<void(MacWifiResponse)> onComplete);
+		void Put(string requestUri, string content, function<void(MacWifiResponse)> onComplete);
 		void SetAuthorization(string authorization);
 		OSErr ProcessReply(AppleEvent* appleEvent);
 		static string Encode(const string &value);

@@ -9,6 +9,9 @@ add_executable(MacWifiINIT
 
 target_link_libraries(MacWifiINIT)
 
+# See: https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
+SET(CMAKE_CXX_FLAGS "-Ofast")
+
 set_target_properties(MacWifiINIT PROPERTIES
     COMPILE_OPTIONS -ffunction-sections # make things smaller
 
@@ -45,7 +48,7 @@ add_application(MacWifi
 	CREATOR "MWFI"
 )
 
-target_link_libraries(MacWifi MacHTTP MacTCPHelper jsoncpp iconv charset)
+target_link_libraries(MacWifi MacHTTP MacTCPHelper gason iconv charset)
 
 # again, add some options to make things smaller.
 set_target_properties(MacWifi PROPERTIES COMPILE_OPTIONS -ffunction-sections)
@@ -63,6 +66,9 @@ install(TARGETS MacWifiLib
 install(FILES MacWifiLib.h WifiEvents.h
     DESTINATION "include/macwifi"
 )
+
+set_target_properties(MacWifiLib PROPERTIES COMPILE_OPTIONS -ffunction-sections)
+set_target_properties(MacWifiLib PROPERTIES LINK_FLAGS "-Wl,-gc-sections")
 
 add_application(MacWifiTest
 	MacWifiTest.cpp

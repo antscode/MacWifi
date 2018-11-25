@@ -2,9 +2,11 @@
 #define _OPENWRT_
 
 #include <functional>
-#include <json/json.h>
+#include <gason/gason.hpp>
 #include "WifiModule.h"
 #include "../Util.h"
+
+using namespace gason;
 
 class OpenWRT : public WifiModule
 {
@@ -59,9 +61,9 @@ private:
 	void AddTunnelToCache(HttpResponse response);
 	void TunnelError(string errorMsg);
 
-	WifiMode GetWifiMode(const Json::Value& mode);
+	WifiMode GetWifiMode(const JsonValue& mode);
 	string GetEncryptionStr(WifiMode mode);
-	WifiEncryption GetEncryption(const Json::Value& encryption);
+	WifiEncryption GetEncryption(const JsonValue& encryption);
 };
 
 #endif // _OPENWRT_

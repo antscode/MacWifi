@@ -21,6 +21,11 @@ void MacWifiLib::Post(string requestUri, string content, function<void(MacWifiRe
 	SendRequestEvent("POST", requestUri, content, onComplete);
 }
 
+void MacWifiLib::Put(string requestUri, string content, function<void(MacWifiResponse)> onComplete)
+{
+	SendRequestEvent("PUT", requestUri, content, onComplete);
+}
+
 void MacWifiLib::SendRequestEvent(string method, string uri, string content, function<void(MacWifiResponse)> onComplete)
 {
 	AEAddressDesc address;
