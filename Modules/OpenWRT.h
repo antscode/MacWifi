@@ -34,35 +34,35 @@ private:
 	function<void(GetTunnelResult)> _onAddTunnelComplete = 0;
 
 	void Login(std::function<void()> onComplete, std::function<void(string)> onError);
-	void LoginResponse(HttpResponse response);
+	void LoginResponse(HttpResponse& response);
 
 	void GetConnectedNetworkRequest();
-	void GetConnectedNetworkResponse(HttpResponse response);
+	void GetConnectedNetworkResponse(HttpResponse& response);
 
 	void GetNetworksRequest();
-	void GetNetworksResponse(HttpResponse response);
+	void GetNetworksResponse(HttpResponse& response);
 
 	void SetSsidRequest();
-	void SetBssidRequest(HttpResponse response);
-	void SetEncryptionRequest(HttpResponse response);
-	void SetKeyRequest(HttpResponse response);
-	void CommitRequest(HttpResponse response);
-	void ReloadRequest(HttpResponse response);
-	void ReloadResponse(HttpResponse response);
+	void SetBssidRequest(HttpResponse& response);
+	void SetEncryptionRequest(HttpResponse& response);
+	void SetKeyRequest(HttpResponse& response);
+	void CommitRequest(HttpResponse& response);
+	void ReloadRequest(HttpResponse& response);
+	void ReloadResponse(HttpResponse& response);
 
 	void InitStunnel();
-	void PopulateTunnelCache(HttpResponse response);
+	void PopulateTunnelCache(HttpResponse& response);
 	void AddOrGetTunnel();
-	void SetTunnelClient(HttpResponse response);
-	void SetTunnelPort(HttpResponse response);
-	void SetTunnelConnect(HttpResponse response);
-	void CommitTunnel(HttpResponse response);
-	void StunnelRestart(HttpResponse response);
-	void AddTunnelToCache(HttpResponse response);
+	void SetTunnelClient(HttpResponse& response);
+	void SetTunnelPort(HttpResponse& response);
+	void SetTunnelConnect(HttpResponse& response);
+	void CommitTunnel(HttpResponse& response);
+	void StunnelRestart(HttpResponse& response);
+	void AddTunnelToCache(HttpResponse& response);
 	void TunnelError(string errorMsg);
 
 	WifiMode GetWifiMode(const JsonValue& mode);
-	string GetEncryptionStr(WifiMode mode);
+	string GetEncryptionStr(WifiMode& mode);
 	WifiEncryption GetEncryption(const JsonValue& encryption);
 };
 

@@ -21,29 +21,29 @@ class VM300 : public WifiModule
 		string _currentSsid;
 
 		void Login(std::function<void()> onComplete);
-		void LoginResponse(HttpResponse response);
+		void LoginResponse(HttpResponse& response);
 		
 		void GetConnectedNetworkRequest();
-		void GetConnectedNetworkResponse(HttpResponse response);
+		void GetConnectedNetworkResponse(HttpResponse& response);
 
 		void GetNetworksRequest();
-		void GetNetworksResponse(HttpResponse response);
+		void GetNetworksResponse(HttpResponse& response);
 
 		void DeleteHotspotsRequest();
-		void DeleteHotspotsResponse(HttpResponse response);
+		void DeleteHotspotsResponse(HttpResponse& response);
 
 		void ConnectRequest();
-		void ConnectResponse(HttpResponse response);
+		void ConnectResponse(HttpResponse& response);
 
 		void Restart();
 		void RestartRequest();
-		void RestartResponse(HttpResponse response);
+		void RestartResponse(HttpResponse& response);
 
-		string GetWifiModeStr(WifiMode mode);
-		WifiMode GetWifiMode(string mode);
+		string GetWifiModeStr(WifiMode& mode);
+		WifiMode GetWifiMode(string& mode);
 
-		string GetEncryptionStr(WifiEncryption encryption);
-		WifiEncryption GetEncryption(string encryption);
+		string GetEncryptionStr(WifiEncryption& encryption);
+		WifiEncryption GetEncryption(string& encryption);
 };
 
 #endif // _VM300_
