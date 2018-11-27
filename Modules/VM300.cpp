@@ -8,10 +8,10 @@ void VM300::Login(std::function<void()> onComplete)
 {
 	_onLoginComplete = onComplete;
 
-	string uri = "http://" + string(WifiDataPtr->Hostname) + "/goform/login";
-	string content = "username=" + string(WifiDataPtr->Username) + "&z999=z999&password=" + string(WifiDataPtr->Password) + "&Login=&platform=pc";
-
-	Comms::Http.Post(uri, content, std::bind(&VM300::LoginResponse, this, _1));
+	Comms::Http.Post(
+		"http://" + string(WifiDataPtr->Hostname) + "/goform/login",
+		"username=" + string(WifiDataPtr->Username) + "&z999=z999&password=" + string(WifiDataPtr->Password) + "&Login=&platform=pc",
+		std::bind(&VM300::LoginResponse, this, _1));
 }
 
 void VM300::LoginResponse(HttpResponse& response)
@@ -33,9 +33,9 @@ void VM300::GetNetworks()
 
 void VM300::GetConnectedNetworkRequest()
 {
-	string uri = "http://" + string(WifiDataPtr->Hostname) + "/adm/status.asp";
-	
-	Comms::Http.Get(uri, std::bind(&VM300::GetConnectedNetworkResponse, this, _1));
+	Comms::Http.Get(
+		"http://" + string(WifiDataPtr->Hostname) + "/adm/status.asp",
+		std::bind(&VM300::GetConnectedNetworkResponse, this, _1));
 }
 
 void VM300::GetConnectedNetworkResponse(HttpResponse& response)
@@ -75,9 +75,9 @@ void VM300::GetConnectedNetworkResponse(HttpResponse& response)
 
 void VM300::GetNetworksRequest()
 {
-	string uri = "http://" + string(WifiDataPtr->Hostname) + "/goform/get_web_hotspots_list";
-
-	Comms::Http.Get(uri, std::bind(&VM300::GetNetworksResponse, this, _1));
+	Comms::Http.Get(
+		"http://" + string(WifiDataPtr->Hostname) + "/goform/get_web_hotspots_list",
+		std::bind(&VM300::GetNetworksResponse, this, _1));
 }
 
 void VM300::GetNetworksResponse(HttpResponse& response)
@@ -152,10 +152,9 @@ void VM300::Connect(string name, string id, WifiMode mode, WifiEncryption encryp
 
 void VM300::DeleteHotspotsRequest()
 {
-	string uri = "http://" + string(WifiDataPtr->Hostname) + "/goform/deleteAllHotspots";
-	string content = "";
-
-	Comms::Http.Post(uri, content, std::bind(&VM300::DeleteHotspotsResponse, this, _1));
+	Comms::Http.Post(
+		"http://" + string(WifiDataPtr->Hostname) + "/goform/deleteAllHotspots", "",
+		std::bind(&VM300::DeleteHotspotsResponse, this, _1));
 }
 
 void VM300::DeleteHotspotsResponse(HttpResponse& response)
@@ -179,8 +178,8 @@ void VM300::DeleteHotspotsResponse(HttpResponse& response)
 
 void VM300::ConnectRequest()
 {
-	string uri = "http://" + string(WifiDataPtr->Hostname) + "/goform/wirelessBrdgApcli";
-	string content =
+	Comms::Http.Post(
+		"http://" + string(WifiDataPtr->Hostname) + "/goform/wirelessBrdgApcli",
 		"apcli_ssid=" + Util::UrlEncode(_ssid) +
 		"&apcli_mode=" + GetWifiModeStr(_mode) +
 		"&apcli_enc=" + GetEncryptionStr(_encryption) +
@@ -194,9 +193,8 @@ void VM300::ConnectRequest()
 		"&allow_motion_dect=0"
 		"&dhcpEnableButton=0"
 		"&ApcliMatchMode=2"
-		"&ApcliBlkCount=0";
-
-	Comms::Http.Post(uri, content, std::bind(&VM300::ConnectResponse, this, _1));
+		"&ApcliBlkCount=0",
+		std::bind(&VM300::ConnectResponse, this, _1));
 }
 
 void VM300::ConnectResponse(HttpResponse& response)
@@ -225,10 +223,10 @@ void VM300::Restart()
 
 void VM300::RestartRequest()
 {
-	string uri = "http://" + string(WifiDataPtr->Hostname) + "/goform/SystemCommand";
-	string content = "command=reboot&SystemCommandSubmit=Restart";
-
-	Comms::Http.Post(uri, content, std::bind(&VM300::RestartResponse, this, _1));
+	Comms::Http.Post(
+		"http://" + string(WifiDataPtr->Hostname) + "/goform/SystemCommand",
+		"command=reboot&SystemCommandSubmit=Restart",
+		std::bind(&VM300::RestartResponse, this, _1));
 }
 
 void VM300::RestartResponse(HttpResponse& response)
@@ -280,14 +278,14 @@ string VM300::GetWifiModeStr(WifiMode& mode)
 {
 	switch (mode)
 	{
-		case WPA2:
-			return "WPA2PSK";
+	case WPA2:
+		return "WPA2PSK";
 
-		case WPA:
-			return "WPAPSKWPA2PSK";
+	case WPA:
+		return "WPAPSKWPA2PSK";
 
-		default:
-			return "OPEN";
+	default:
+		return "OPEN";
 	}
 }
 
@@ -306,20 +304,20 @@ string VM300::GetEncryptionStr(WifiEncryption& encryption)
 {
 	switch (encryption)
 	{
-		case AES:
-			return "AES";
+	case AES:
+		return "AES";
 
-		case TKIP:
-			return "TKIPAES";
+	case TKIP:
+		return "TKIPAES";
 
-		default:
-			return "NONE";
+	default:
+		return "NONE";
 	}
 }
 
 WifiEncryption VM300::GetEncryption(string& encryption)
 {
-	if(encryption == "AES")
+	if (encryption == "AES")
 		return AES;
 
 	if (encryption == "TKIPAES")

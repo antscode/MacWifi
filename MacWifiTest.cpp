@@ -18,8 +18,8 @@ int _curRequest = 0;
 MacWifiLib _wifiLib;
 Util _util;
 
-void DoRequest(string title, string url);
-void OnResponse(MacWifiResponse response);
+void DoRequest(const string& title, const string& url);
+void OnResponse(MacWifiResponse& response);
 pascal OSErr ProcessResponseEvent(AppleEvent* appleEvent, AppleEvent* reply, long refCon);
 
 int main()
@@ -56,7 +56,7 @@ int main()
 	return 0;
 }
 
-void DoRequest(string title, string url)
+void DoRequest(const string& title, const string& url)
 {
 	printf("%s (press return)...\n", title.c_str());
 	fflush(stdout);
@@ -69,7 +69,7 @@ void DoRequest(string title, string url)
 	_doRequest = false; 
 }
 
-void OnResponse(MacWifiResponse response)
+void OnResponse(MacWifiResponse& response)
 {
 	int timeTaken = _util.StopTimer();
 	printf("\n\nRequest took %dms.\n\n", timeTaken);

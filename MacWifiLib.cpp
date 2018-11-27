@@ -11,22 +11,22 @@ MacWifiLib::MacWifiLib()
 	_utf8ToMacRoman = true;
 }
 
-void MacWifiLib::Get(string requestUri, function<void(MacWifiResponse)> onComplete)
+void MacWifiLib::Get(const string& requestUri, function<void(MacWifiResponse&)> onComplete)
 {
 	SendRequestEvent("GET", requestUri, "", onComplete);
 }
 
-void MacWifiLib::Post(string requestUri, string content, function<void(MacWifiResponse)> onComplete)
+void MacWifiLib::Post(const string& requestUri, const string& content, function<void(MacWifiResponse&)> onComplete)
 {
 	SendRequestEvent("POST", requestUri, content, onComplete);
 }
 
-void MacWifiLib::Put(string requestUri, string content, function<void(MacWifiResponse)> onComplete)
+void MacWifiLib::Put(const string& requestUri, const string& content, function<void(MacWifiResponse&)> onComplete)
 {
 	SendRequestEvent("PUT", requestUri, content, onComplete);
 }
 
-void MacWifiLib::SendRequestEvent(string method, string uri, string content, function<void(MacWifiResponse)> onComplete)
+void MacWifiLib::SendRequestEvent(const string& method, const string& uri, const string& content, function<void(MacWifiResponse&)> onComplete)
 {
 	AEAddressDesc address;
 	AppleEvent appleEvent;
@@ -47,7 +47,7 @@ void MacWifiLib::SendRequestEvent(string method, string uri, string content, fun
 	const char* cAuthorization = _authorization.c_str();
 
 	int callbackIndex = _callbacks.size();
-	_callbacks.insert(pair<int, function<void(MacWifiResponse)>>(callbackIndex, onComplete));
+	_callbacks.insert(pair<int, function<void(MacWifiResponse&)>>(callbackIndex, onComplete));
 
 	AEPutParamPtr(&appleEvent, kMethodParam, typeChar, cMethod, strlen(cMethod));
 	AEPutParamPtr(&appleEvent, kUriParam, typeChar, cUri, strlen(cUri));
@@ -118,7 +118,7 @@ OSErr MacWifiLib::ProcessReply(AppleEvent* appleEvent)
 	_callbacks[callbackId] = 0;
 }
 
-void MacWifiLib::GetParamAsString(AppleEvent* appleEvent, AEKeyword keyword, string &output)
+void MacWifiLib::GetParamAsString(AppleEvent* appleEvent, AEKeyword keyword, string& output)
 {
 	DescType typeCode;
 	Size sizeOfParam, actualSize;
@@ -135,7 +135,7 @@ void MacWifiLib::GetParamAsString(AppleEvent* appleEvent, AEKeyword keyword, str
 	DisposePtr(buffer);
 }
 
-string MacWifiLib::Encode(const string &value)
+string MacWifiLib::Encode(const string& value)
 {
 	ostringstream escaped;
 	escaped.fill('0');

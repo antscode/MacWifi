@@ -21,9 +21,9 @@ class MacWifiLib
 {
 	public:
 		MacWifiLib();
-		void Get(string requestUri, function<void(MacWifiResponse)> onComplete);
-		void Post(string requestUri, string content, function<void(MacWifiResponse)> onComplete);
-		void Put(string requestUri, string content, function<void(MacWifiResponse)> onComplete);
+		void Get(const string& requestUri, function<void(MacWifiResponse&)> onComplete);
+		void Post(const string& requestUri, const string& content, function<void(MacWifiResponse&)> onComplete);
+		void Put(const string& requestUri, const string& content, function<void(MacWifiResponse&)> onComplete);
 		void SetAuthorization(string authorization);
 		OSErr ProcessReply(AppleEvent* appleEvent);
 		static string Encode(const string &value);
@@ -33,11 +33,11 @@ class MacWifiLib
 		OSType _appSig;
 		string _authorization;
 		bool _utf8ToMacRoman;
-		map<int, function<void(MacWifiResponse)>> _callbacks;
-		void SendRequestEvent(string method, string uri, string content, function<void(MacWifiResponse)> onComplete);
+		map<int, function<void(MacWifiResponse&)>> _callbacks;
+		void SendRequestEvent(const string& method, const string& uri, const string& content, function<void(MacWifiResponse&)> onComplete);
 		void GetEventAddress(AEAddressDesc* address);
 		OSErr SendEvent(AppleEvent* appleEvent);
-		void GetParamAsString(AppleEvent* appleEvent, AEKeyword keyword, string &output);
+		void GetParamAsString(AppleEvent* appleEvent, AEKeyword keyword, string& output);
 };
 
 #endif
