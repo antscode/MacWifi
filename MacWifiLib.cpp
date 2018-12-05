@@ -11,22 +11,22 @@ MacWifiLib::MacWifiLib()
 	_utf8ToMacRoman = true;
 }
 
-void MacWifiLib::Get(const string& requestUri, function<void(MacWifiResponse&)> onComplete)
+void MacWifiLib::Get(const string& requestUri, function<void(MacWifiResponse&)> onComplete, long id)
 {
-	SendRequestEvent("GET", requestUri, "", onComplete);
+	SendRequestEvent("GET", requestUri, "", onComplete, id);
 }
 
-void MacWifiLib::Post(const string& requestUri, const string& content, function<void(MacWifiResponse&)> onComplete)
+void MacWifiLib::Post(const string& requestUri, const string& content, function<void(MacWifiResponse&)> onComplete, long id)
 {
-	SendRequestEvent("POST", requestUri, content, onComplete);
+	SendRequestEvent("POST", requestUri, content, onComplete, id);
 }
 
-void MacWifiLib::Put(const string& requestUri, const string& content, function<void(MacWifiResponse&)> onComplete)
+void MacWifiLib::Put(const string& requestUri, const string& content, function<void(MacWifiResponse&)> onComplete, long id)
 {
-	SendRequestEvent("PUT", requestUri, content, onComplete);
+	SendRequestEvent("PUT", requestUri, content, onComplete, id);
 }
 
-void MacWifiLib::SendRequestEvent(const string& method, const string& uri, const string& content, function<void(MacWifiResponse&)> onComplete)
+void MacWifiLib::SendRequestEvent(const string& method, const string& uri, const string& content, function<void(MacWifiResponse&)> onComplete, long id)
 {
 	AEAddressDesc address;
 	AppleEvent appleEvent;
@@ -46,15 +46,19 @@ void MacWifiLib::SendRequestEvent(const string& method, const string& uri, const
 	const char* cContent = content.c_str();
 	const char* cAuthorization = _authorization.c_str();
 
-	int callbackIndex = _callbacks.size();
-	_callbacks.insert(pair<int, function<void(MacWifiResponse&)>>(callbackIndex, onComplete));
+	_callbackIndex++;
+	MacWifiCallback callback;
+	callback.Callback = onComplete;
+	callback.Id = id;
+
+	_callbacks.insert(pair<int, MacWifiCallback>(_callbackIndex, callback));
 
 	AEPutParamPtr(&appleEvent, kMethodParam, typeChar, cMethod, strlen(cMethod));
 	AEPutParamPtr(&appleEvent, kUriParam, typeChar, cUri, strlen(cUri));
 	AEPutParamPtr(&appleEvent, kDataParam, typeChar, cContent, strlen(cContent));
 	AEPutParamPtr(&appleEvent, kAuthorizationParam, typeChar, cAuthorization, strlen(cAuthorization));
 	AEPutParamPtr(&appleEvent, kUtf8ToMacRomanParam, typeBoolean, &_utf8ToMacRoman, sizeof(bool));
-	AEPutParamPtr(&appleEvent, kCallbackIdParam, typeInteger, &callbackIndex, sizeof(int));
+	AEPutParamPtr(&appleEvent, kCallbackIdParam, typeInteger, &_callbackIndex, sizeof(int));
 
 	OSErr err = SendEvent(&appleEvent);
 
@@ -113,9 +117,10 @@ OSErr MacWifiLib::ProcessReply(AppleEvent* appleEvent)
 	AEGetParamPtr(appleEvent, kStatusCodeParam, typeInteger, &typeCode, &response.StatusCode, sizeof(int), &actualSize);
 	GetParamAsString(appleEvent, kErrorMsgParam, response.ErrorMsg);
 	GetParamAsString(appleEvent, kContentParam, response.Content);
+	response.Id = _callbacks[callbackId].Id;
 
-	_callbacks[callbackId](response);
-	_callbacks[callbackId] = 0;
+	_callbacks[callbackId].Callback(response);
+	_callbacks.erase(callbackId);
 }
 
 void MacWifiLib::GetParamAsString(AppleEvent* appleEvent, AEKeyword keyword, string& output)

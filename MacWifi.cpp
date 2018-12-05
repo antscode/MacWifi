@@ -208,7 +208,7 @@ pascal OSErr ProcessRequestEvent(AppleEvent* appleEvent, AppleEvent* reply, long
 		_requestStatus = Init;
 		while (_requestStatus != Complete)
 		{
-			WaitNextEvent(everyEvent, &event, 0, NULL);
+			WaitNextEvent(everyEvent - highLevelEventMask, &event, 0, NULL); 
 
 			switch (_requestStatus)
 			{
