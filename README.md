@@ -1,14 +1,14 @@
-# MacWifi
+ï»¿# MacWifi
 MacWifi is a System Extension to add wifi functionality to your 68k Mac. MacWifi allows you to view available wifi 
 networks and connect to a wifi network through a familiar menu in the menu bar. WPA2, WPA and public networks are supported.
 
 ## System Requirements
-* MacWifi has been tested on System 7.5, however it should work from System 7.
+* System 7 or greater. The [Thread Manager](http://macintoshgarden.org/apps/thread-manager) extension is required for OS versions below System 7.5
 * MacTCP or Open Transport installed
 
 Your Mac will also need an ethernet device and a wifi device. Currently, MacWifi supports the following wifi devices:
 
-* OpenWRT devices (MacWifi has been tested on a [GL.iNet GL-AR300M](https://www.gl-inet.com/products/gl-ar300m/), but other OpenWRT devices should work)
+* OpenWRT devices (MacWifi has been tested on a [GL.iNet GL-AR300M16-Ext](https://www.gl-inet.com/products/gl-ar300m/), but other OpenWRT devices should work)
 * [Vonets VM300](http://www.vonets.com/ProductViews.asp?D_ID=33) wifi module
 
 The Vonets VM300 is less expensive than OpenWRT devices, however OpenWRT is recommended for better speed, stability and features. 
@@ -17,6 +17,12 @@ The Vonets VM300 is less expensive than OpenWRT devices, however OpenWRT is reco
 OpenWRT is a Linux OS designed for network devices. Your device must have OpenWRT version 18.06.0 or later installed. You can download the latest release here:
 
 [https://downloads.openwrt.org/](https://downloads.openwrt.org/) ([instructions](https://wiki.openwrt.org/doc/howto/generic.sysupgrade))
+
+Note that if you plan to purchase a GL-AR300M device, not all models are supported. Only the models with NOR memory are supported - models with NAND memory will 
+not work, as they cannot be upgraded to the latest version of OpenWRT. The following models are supported:
+
+* GL-AR300M16ï»¿ï»¿ï»¿ (internal antennas, 16m NOR memory only)
+* GL-AR300M16-Extï»¿ (external antennas, 16m NOR memory only)
 
 For the AR300M, you'll find the correct upgrade package under ar71xx > generic > ar300m file ending in sysupgrade.bin. The quick way of updating firmware
 is via the Luci interface under System > Backup / Flash Firmware. You can upload you package file from there.
@@ -68,11 +74,11 @@ the [68KMLA Forums](https://68kmla.org/forums/index.php?/topic/31078-adding-wi-f
 
 The VM300 is a very basic device and has a few issues and limitations:
 
-* When connecting to a wifi network, don’t enter the wrong password! Otherwise you’ll brick the VM300 and you’ll need to do a factory reset (by shorting pins 5 and 8 on the board)
+* When connecting to a wifi network, donâ€™t enter the wrong password! Otherwise youâ€™ll brick the VM300 and youâ€™ll need to do a factory reset (by shorting pins 5 and 8 on the board)
 * Connecting to a new wifi network requires the VM300 to restart - the process takes about 2 minutes.
 * Fetching the network list takes about 10 seconds.
-* If you issue too many requests (i.e. get the list of wifi networks too many times), the device appears to run out of memory and locks up – requiring a restart.
-* Occasionally, the device fails to start – a power cycle fixes this.
+* If you issue too many requests (i.e. get the list of wifi networks too many times), the device appears to run out of memory and locks up â€“ requiring a restart.
+* Occasionally, the device fails to start â€“ a power cycle fixes this.
 
 ## Building from Source
 MacWifi requires Retro68 for compilation, and the following libraries:
@@ -99,5 +105,5 @@ The MacWifi extension will be in the MacWifi-build directory as a bin file and d
 * MacWifi is built using [Retro68](https://github.com/autc04/Retro68).
 * System Menu INIT code based on "SysMenu" shell project by Matt Slot, circa 1995.
 * Password field based on code snippet by Phil Kearney, circa 1994.
-* Startup icon code by Peter Lewis, Jim Walker & François Pottier, 1994.
+* Startup icon code by Peter Lewis, Jim Walker & FranÃ§ois Pottier, 1994.
 * [iconvpp](https://github.com/unnonouno/iconvpp) C++ wrapper for iconv
