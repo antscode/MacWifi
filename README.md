@@ -70,7 +70,7 @@ Crash course in vim: Press *i* to enter insert mode, make your edits, press Esca
 
 ## About the Vonets VM300
 The VM300 was the first device I discovered that could communicate with a vintage Mac over 10mbs Half Duplex. Setup instructions are on
-the [68KMLA Forums](https://68kmla.org/forums/index.php?/topic/31078-adding-wi-fi-to-my-mac-se30/).
+the [68KMLA Forums](https://68kmla.org/forums/index.php?app=forums&module=forums&controller=topic&id=31078).
 
 The VM300 is a very basic device and has a few issues and limitations:
 
